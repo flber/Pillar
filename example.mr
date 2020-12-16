@@ -1,0 +1,38 @@
+# This is a test
+
+##       This is an h2
+#This is another h1
+
+*what happens?
+
+ *testing, testing*. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. *#static* 
+
+[{ a weirdly long link  }](link.com)
+[{ a link with [ characters ] in [ it (  }](link.com)
+
+more tests.
+
+## h2
+##another h2
+
+- list item 1
+- list item 2
+	- woah, sublist!
+	- another
+		- even more!?!
+- back to normal
+		- up two at once ?!?!?!?!
+
+~ this is an ordered list
+~ another item
+	~ indented
+	~ still indented
+
+	- indented list to start
+	- still indented
+		- indented more
+
+![a selfie](selfie.gif)
+
+
+### an h3 
