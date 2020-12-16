@@ -9,6 +9,7 @@ Pillar uses the marble markup format, which is quite similar to markdown but wit
 - Images and links follow normal markdown syntax
 - Unordered lists still use `-`, but it's far less picky about initial indentation than some markdown parsers (I'm looking at you cmark) and supports weird changes in indentation
 - Ordered lists just use `~`, so no need for manually numbering your lists. Same indentation support as ordered lists.
+- Blockquotes use the same syntax as markdown, a `>` with as much or as little whitespace before and after as you want.
 
 I'm also planning on adding several more niche elements to the marble format, so that list will grow over time.
 
