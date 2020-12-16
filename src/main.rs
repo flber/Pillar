@@ -59,6 +59,7 @@ fn parse_marble(lines: Vec<String>) -> String {
     // multi-line formatting goes out here
     output = ul(&output);
     output = ol(&output);
+    output = blockquote(&output);
 
 	output = p(&output);
     output = nl(&output);
@@ -81,9 +82,9 @@ fn p(l: &Vec<String>) -> Vec<String> {
 	for i in 0..l.len() {
 		let mut line = l[i].clone();
 		if line.len() > 4 {
-		    let four = &line[first(&line).1..4];
-
-			if four != "<h1>" && four != "<h2>" && four != "<h3>" && four != "<ul>" && four != "<ol>" && four != "<li>" {
+			let i_first = first(&line).1;
+			let four = &line[i_first..i_first+4];
+			if four == "<em>" || four == "<a h" || four == "<img" || first(&line).0 != "<" {
 				line.insert_str(0, "<p>");
 				line.push_str("</p>");
 			}
@@ -91,6 +92,31 @@ fn p(l: &Vec<String>) -> Vec<String> {
 		output.push(line.to_string());
 	}
 	return output
+}
+
+fn blockquote(l: &Vec<String>) -> Vec<String> {
+    let mut output = Vec::<String>::new();
+    let mut i = 0;
+    while i < l.len() {
+        let mut line = l[i].clone();
+        let char = first(&line).0;
+
+		let mut is_blockquote = false;
+		if char == ">" {
+			output.push(String::from("<blockquote>"));
+			line = remove(&line, first(&line).1, 1);
+			line = remove(&line, 0, first(&line).1);
+			is_blockquote = true;
+		}
+        
+        output.push(line.to_string());
+        if is_blockquote {
+			output.push(String::from("</blockquote>"));	
+        }
+        i += 1;
+    }
+
+    return output;
 }
 
 fn ol(l: &Vec<String>) -> Vec<String> {
