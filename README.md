@@ -34,7 +34,7 @@ renders to
 <h2>this is an h2</h2>
 <h1>this is an h1</h1>
 ```
-
+---
 
 ```
 this is a normal paragraph
@@ -45,7 +45,7 @@ renders to
 <p>this is a normal paragraph</p>
 <p>this is too, but with <em>italics</em></p>
 ```
-
+---
 
 ```
 - an unordered list
@@ -74,7 +74,7 @@ renders to
 <li>it has the same abilities as the unordered list</li>
 </ol>
 ```
-
+---
 
 ```
 > This is a simple blockquote, nothing too fancy here
