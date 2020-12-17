@@ -1,5 +1,5 @@
 # Pillar
-A simple site generator with template support, written in plain Rust with no extensions.
+A simple site generator with template support, written in plain Rust with no dependencies.
 
 Soon to be used in [[my site]](https://mineralexistence.com)
 

@@ -35,6 +35,7 @@ fn main() {
     			// unpacks the entries result
     			Ok(entries) => {
     				// goes through the entry objects
+    				println!("Parsing pages...");
     				for entry in entries {
     					// unpacks the entry result
     					match entry {
@@ -65,7 +66,7 @@ fn main() {
    							    let page = replace(&template_contents, "{{content}}", &parsed);
 
 								let target = [HTML_PATH, &path[MARBLE_PATH.len()+1..&path.len()-3], "html"].concat();
-								println!("{}", target);
+								println!("+ {}", target);
    							    match fs::write(&target, &page) {
 							    	Ok(_) => (),
 							    	Err(e) => println!("failed to write to {}: {}", &target, e),
@@ -73,7 +74,7 @@ fn main() {
    							
     						},
     						Err(e) => {
-    							println!("Failed to open file with error {}", e);
+    							println!("Failed to open entry with error {}", e);
     						}
     					}
     				}
@@ -85,59 +86,77 @@ fn main() {
     		}
     	},
     	"clean" => {
-    		
+		 	match fs::read_dir(HTML_PATH) {
+    			// unpacks the entries result
+    			Ok(entries) => {
+    				// goes through the entry objects
+    				println!("Deleting html...");
+    				for entry in entries {
+    					// unpacks the entry result
+    					match entry {
+    						Ok(entry) => {
+    							// parses the file
+    							let path = format!("{:?}", entry.path());
+    							let path_str = &path[1..path.len()-1];
+    							println!("- {}", path_str);
+    							if &path_str[path_str.len()-4..] == "html" {
+	    							match fs::remove_file(path_str) {
+	    								Ok(_) => (),
+	    								Err(e) => println!("failed to delete file {} with error {}", path_str, e)
+	    							}
+    							}
+    						}
+    						Err(e) => {
+						    	println!("Failed to open entry with error {}", e);
+						    }
+						}
+					}
+				},
+   				Err(e) => {
+    				println!("Failed to open directory {} with error {}", HTML_PATH, e);
+    				return ()
+    			}
+    		}
     	},
     	_ => println!("{}", HELP_MENU)
     }
-
-    /*
-    let file_name = &args[1];
-    let file_str = file_name.as_str();
-    let target = [&file_str[..&file_str.len() - 2], "html"].concat();
-
-    match &file_str[&file_str.len() - 2..] {
-        "mr" => (),
-        _ => {
-            println!("Wrong type of file, please use .mr files");
-            return ();
-        }
-    };
-
-    let contents = fs::read_to_string(file_name).expect("Something went wrong reading the file");
-
-    let split_contents = contents.lines();
-    let str_lines: Vec<&str> = split_contents.collect();
-    let mut lines = Vec::<String>::new();
-
-    for str_line in str_lines {
-        let mut line = String::new();
-        line.push_str(str_line);
-        lines.push(line);
-    }
-
-    let parsed_lines = parse_marble(lines);
-    
-    match fs::write(&target, parsed_lines.join("")) {
-        Ok(_) => (),
-        Err(e) => println!("failed to write to {}: {}", &target, e),
-    };
-    */
 }
 
 fn parse_marble(lines: Vec<String>) -> Vec<String> {
     let mut output = Vec::<String>::new();
 
+	// sets lines which shouldn't be parsed (code and page variables)
+    let mut reserved = Vec::<String>::new();
+	let mut in_reserved = false;
+    for i in 0..lines.len() {
+    	let mut line = lines[i].clone();
+    	if line.len() > 5 {
+	    	let first = first(&line).1;
+	    	if &line[first..first+6] == "!code!" && !in_reserved {
+	    		in_reserved = true;
+	    		line = String::from("<pre><code>");
+	    	} else if &line[first..first+6] == "!code!" && in_reserved {
+	    		line = String::from("</code></pre>");
+	    		in_reserved = false;
+	    	} else if in_reserved {
+	    		line.push_str("\n");
+	    		reserved.push(line);
+	    		line = String::from("!reserved!");
+	    	}
+    	}
+    	output.push(line);
+    }
+
     // single line formatting goes in here
-    for mut line in lines {
-        if line.len() > 0 {
-            line = h(&line);
-            line = em(&line);
-            line = img(&line);
-            line = a(&line);
+   for i in 0..output.len() {
+        if output[i].len() > 0 {
+            output[i] = h(&output[i]);
+            output[i] = em(&output[i]);
+            output[i] = img(&output[i]);
+            output[i] = a(&output[i]);
         } else {
-            // line = String::from("<br>");
+            // output[i] = String::from("<br>");
         }
-        output.push(line);
     }
     // multi-line formatting goes out here
     output = ul(&output);
@@ -146,6 +165,14 @@ fn parse_marble(lines: Vec<String>) -> Vec<String> {
 
 	output = p(&output);
     output = nl(&output);
+
+	let mut reserved_index = 0;
+    for i in 0..output.len() {
+    	if output[i].contains("!reserved!") {
+    		output[i] = reserved[reserved_index].clone();
+    		reserved_index += 1;
+    	}
+    }
 
     return output;
 }
