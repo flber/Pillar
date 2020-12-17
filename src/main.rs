@@ -1,14 +1,96 @@
 use std::env;
 use std::fs;
 
-const HELP_MENU: &str = "\nConverts from marble to html\n";
+const HELP_MENU: &str = "Builds static site from marble files \n\
+						 \n\
+						 USAGE: \n\
+						 \tpillar [OPTIONS] [COMMAND] \n\
+						 \n\
+						 OPTIONS: \n\
+						 \t-h\tprints this information \n\
+						 \t-V\tprints current version \n\
+						 \n\
+						 COMMANDS: \n\
+						 \tbuild\tbuilds html from marble \n\
+						 \tclean\tclears html directory \n";
+
+const TEMPLATE_PATH: &str = "templates/";
+const MARBLE_PATH: &str = "pages/";
+const HTML_PATH: &str = "docs/";
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() == 0 {
+    if args.len() < 2 {
         println!("{}", HELP_MENU);
-        return ();
+        return ()
     }
+
+    let instruction = args[1].as_str();
+
+    match instruction {
+    	"-V" => println!("Pillar version {}", env!("CARGO_PKG_VERSION")),
+    	"build" => {
+    		// gets the marble files
+    		match fs::read_dir(MARBLE_PATH) {
+    			// unpacks the entries result
+    			Ok(entries) => {
+    				// goes through the entry objects
+    				for entry in entries {
+    					// unpacks the entry result
+    					match entry {
+    						Ok(entry) => {
+    							// parses the file
+    							let path = format!("{:?}", entry.path());
+    							let path_str = &path[1..path.len()-1];
+    							
+    							let contents = fs::read_to_string(path_str)
+    								.expect(format!("Something went wrong reading {}", path_str).as_str());
+
+    							let split_contents = contents.lines();
+   							    let str_lines: Vec<&str> = split_contents.collect();
+   							    let mut lines = Vec::<String>::new();
+   							
+   							    for str_line in str_lines {
+   							        let mut line = String::new();
+   							        line.push_str(str_line);
+   							        lines.push(line);
+   							    }
+   							
+   							    let parsed = parse_marble(lines).join("");
+
+								let default_template_path = [TEMPLATE_PATH, "default.html"].concat();
+   							    let template_contents = fs::read_to_string(default_template_path)
+   							    	.expect("couldn't load default template");
+
+   							    let page = replace(&template_contents, "{{content}}", &parsed);
+
+								let target = [HTML_PATH, &path[MARBLE_PATH.len()+1..&path.len()-3], "html"].concat();
+								println!("{}", target);
+   							    match fs::write(&target, &page) {
+							    	Ok(_) => (),
+							    	Err(e) => println!("failed to write to {}: {}", &target, e),
+							    };
+   							
+    						},
+    						Err(e) => {
+    							println!("Failed to open file with error {}", e);
+    						}
+    					}
+    				}
+    			},
+    			Err(e) => {
+    				println!("Failed to open directory {} with error {}", MARBLE_PATH, e);
+    				return ()
+    			}
+    		}
+    	},
+    	"clean" => {
+    		
+    	},
+    	_ => println!("{}", HELP_MENU)
+    }
+
+    /*
     let file_name = &args[1];
     let file_str = file_name.as_str();
     let target = [&file_str[..&file_str.len() - 2], "html"].concat();
@@ -33,15 +115,16 @@ fn main() {
         lines.push(line);
     }
 
-    let parsed = parse_marble(lines);
+    let parsed_lines = parse_marble(lines);
     
-    match fs::write(&target, parsed) {
+    match fs::write(&target, parsed_lines.join("")) {
         Ok(_) => (),
         Err(e) => println!("failed to write to {}: {}", &target, e),
     };
+    */
 }
 
-fn parse_marble(lines: Vec<String>) -> String {
+fn parse_marble(lines: Vec<String>) -> Vec<String> {
     let mut output = Vec::<String>::new();
 
     // single line formatting goes in here
@@ -64,7 +147,7 @@ fn parse_marble(lines: Vec<String>) -> String {
 	output = p(&output);
     output = nl(&output);
 
-    return output.join("");
+    return output;
 }
 
 fn nl(l: &Vec<String>) -> Vec<String> {
@@ -416,6 +499,13 @@ fn insert(s: &String, idx: usize, ins: &str) -> String {
 }
 */
 
+fn replace(s: &String, target: &str, insert: &str) -> String {
+	let mut source = s.clone();
+	let i = source.find(target).unwrap();
+	source.replace_range(i..i+target.len(), insert);
+	return source.to_string()
+}
+
 fn remove(s: &String, idx: usize, len: usize) -> String {
     assert!(idx <= s.len(), "the index was larger than the target slice");
 
@@ -438,3 +528,4 @@ fn first(s: &String) -> (String, usize) {
     }
     return (String::from(""), num);
 }
+

@@ -3,14 +3,14 @@
 ##       This is an h2
 #This is another h1
 
-*what happens?
+*what happens? (hopefully nothing)
 
  *testing, testing*. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. *#static* 
 
 [{ a weirdly long link  }](link.com)
 [{ a link with [ characters ] in [ it (  }](link.com)
 
-more tests.
+more tests (this is just a normal line).
 
 ## h2
 ##another h2
@@ -36,6 +36,8 @@ more tests.
 
 > this is a blockquote
     > 	here's another, but with weird whitespace
+
+[{here's a link to another page}](other_page.html)
 
 
 ### an h3 

@@ -2,6 +2,7 @@
 A simple site generator with template support, written in plain Rust with no extensions.
 
 Soon to be used in [[my site]](https://mineralexistence.com)
+A nice little demo is available in the `examples/` folder of this repo, which shows off Pillar's features (and honestly is mostly a place for me to test and debug)
 
 Pillar uses the marble markup format, which is quite similar to markdown but with a few changes:
 - Like markdown, headers are defined with `#`. Marble has support for header levels 1 to 3 (because when are you really using anything smaller?)
@@ -11,9 +12,10 @@ Pillar uses the marble markup format, which is quite similar to markdown but wit
 - Ordered lists just use `~`, so no need for manually numbering your lists. Same indentation support as ordered lists.
 - Blockquotes use the same syntax as markdown, a `>` with as much or as little whitespace before and after as you want.
 
-I'm also planning on adding several more niche elements to the marble format, so that list will grow over time.
+I'm also planning on adding several more niche elements to the marble format, so that list above will grow over time.
 
-Right now it just parses marble files but isn't really a site generator, so the next couple of update will be implementing templates. After that I'll be alternating between extending marble and adding substitutions in the template html.
+Pillar also does some html substitutions to make templates more interesting
+- {{content}} is replaced with the content of a give marble page, parsed into html (sort of necessary)
 
 Lot's of updates and improvements to come!
 
