@@ -93,7 +93,8 @@ renders to
 let mut this = "an actual code block";
 this = ["this is", &this].concat();
 	// here's some indentation
-</code></pre>```
+</code></pre>
+```
 
 Lot's of updates and improvements to come!
 
