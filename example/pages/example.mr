@@ -2,6 +2,7 @@
 
 ##       This is an h2
 #This is another h1
+    ### this h3 is indented
 
 *what happens? (hopefully nothing)
 
@@ -41,3 +42,11 @@ more tests (this is just a normal line).
 
 
 ### an h3 
+
+
+> This is a simple blockquote, nothing too fancy here
+!code!
+let mut this = "an actual code block";
+this = ["this is", &this].concat();
+	// here's some indentation
+!code!

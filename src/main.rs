@@ -291,14 +291,24 @@ fn ol(l: &Vec<String>) -> Vec<String> {
                 line.insert_str(line.len(), "</li>");
             }
             level = space;
-        } else if char != "-" && in_list {
+        } else if char != "~" && in_list {
             in_list = false;
             for _j in 0..level + 1 {
                 output.push(String::from("</ol>"));
             }
             level = 0;
         }
+        
         output.push(line.to_string());
+
+        if i == l.len()-1 && in_list {
+            in_list = false;
+            for _j in 0..level + 1 {
+                output.push(String::from("</ol>"));
+            }
+            level = 0;
+        }
+        
         i += 1;
     }
 
@@ -349,7 +359,7 @@ fn ul(l: &Vec<String>) -> Vec<String> {
                 line.insert_str(line.len(), "</li>");
             }
             level = space;
-        } else if char != "-" && in_list {
+        } else if (char != "-" || i == l.len()-1) && in_list {
             in_list = false;
             for _j in 0..level + 1 {
                 output.push(String::from("</ul>"));
@@ -357,6 +367,15 @@ fn ul(l: &Vec<String>) -> Vec<String> {
             level = 0;
         }
         output.push(line.to_string());
+
+        if i == l.len()-1 && in_list {
+            in_list = false;
+            for _j in 0..level + 1 {
+                output.push(String::from("</ul>"));
+            }
+            level = 0;
+        }
+        
         i += 1;
     }
 
@@ -477,18 +496,19 @@ fn h(s: &String) -> String {
     let mut line = String::new();
     let mut is_header = false;
 
-    if s.len() > 2 && &s[..3] == "###" {
-        line = remove(&s, 0, 3);
+	let first = first(&s).1;
+    if s.len() > first+2 && &s[first..first+3] == "###" {
+        line = remove(&s, 0, first+3);
         line.insert_str(0, "<h3>");
         line.insert_str(line.len(), "</h3>");
         is_header = true;
-    } else if s.len() > 1 && &s[..2] == "##" {
-        line = remove(&s, 0, 2);
+    } else if s.len() > first+1 && &s[first..first+2] == "##" {
+        line = remove(&s, 0, first+2);
         line.insert_str(0, "<h2>");
         line.insert_str(line.len(), "</h2>");
         is_header = true;
-    } else if s.len() > 0 && &s[..1] == "#" {
-        line = remove(&s, 0, 1);
+    } else if s.len() > first && &s[first..first+1] == "#" {
+        line = remove(&s, 0, first+1);
         line.insert_str(0, "<h1>");
         line.insert_str(line.len(), "</h1>");
         is_header = true;
@@ -497,7 +517,7 @@ fn h(s: &String) -> String {
     if is_header {
         let mut hit_text = false;
         for i in (0..line.len() - 6).rev() {
-            if !hit_text && &line[i..i + 1] == " " {
+            if !hit_text && (&line[i..i + 1] == " " || &line[i..i + 1] == "\t") {
                 line = remove(&line, i, 1);
             } else {
                 hit_text = true;
@@ -506,7 +526,7 @@ fn h(s: &String) -> String {
         hit_text = false;
         let mut i = 4;
         while i < line.len() - 5 {
-            if !hit_text && &line[i..i + 1] == " " {
+            if !hit_text && (&line[i..i + 1] == " " || &line[i..i + 1] == "\t") {
                 line = remove(&line, i, 1);
             } else {
                 hit_text = true;
