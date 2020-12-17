@@ -2,6 +2,7 @@
 A simple site generator with template support, written in plain Rust with no extensions.
 
 Soon to be used in [[my site]](https://mineralexistence.com)
+
 A nice little demo is available in the `examples/` folder of this repo, which shows off Pillar's features (and honestly is mostly a place for me to test and debug)
 
 Pillar uses the marble markup format, which is quite similar to markdown but with a few changes:
