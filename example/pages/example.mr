@@ -1,52 +1,54 @@
-# This is a test
+# これはテストです
 
-##       This is an h2
-#This is another h1
-    ### this h3 is indented
+##これはh2です
+#これは別のh1です
+    ###このh3はインデントされています
 
-*what happens? (hopefully nothing)
+*何が起こるのですか？ （うまくいけば何も）
 
- *testing, testing*. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. *#static* 
+ *テスト、テスト*。速い茶色のキツネは怠惰な犬を飛び越えます。速い茶色のキツネは怠惰な犬を飛び越えます。速い茶色のキツネは怠惰な犬を飛び越えます。速い茶色のキツネは怠惰な犬を飛び越えます。 *＃静的*
 
-[{ a weirdly long link  }](link.com)
-[{ a link with [ characters ] in [ it (  }](link.com)
+[{奇妙に長いリンク}](link.com)
+[{[it（}](link.com)に[文字]が含まれるリンク
 
-more tests (this is just a normal line).
+より多くのテスト(これは単なる通常の行です)。
 
 ## h2
-##another h2
+##別のh2
 
-- list item 1
-- list item 2
-	- woah, sublist!
-	- another
-		- even more!?!
-- back to normal
-		- up two at once ?!?!?!?!
+-リストアイテム1
+-リストアイテム2
+-すごい、サブリスト！
+-別の
+-さらに！？！
+-通常に戻る
+-一度に2つアップ？！？！？！？！
 
-~ this is an ordered list
-~ another item
-	~ indented
-	~ still indented
+~これは順序付きリストです
+~別のアイテム
+~インデント
+~まだインデントされています
 
-	- indented list to start
-	- still indented
-		- indented more
+-開始するインデントされたリスト
+-まだインデントされています
+-さらにインデント
 
-![a selfie](selfie.gif)
+![自分撮り](selfie.gif)
 
-> this is a blockquote
-    > 	here's another, but with weird whitespace
+>これはブロッククォートです
+    >これは別のものですが、奇妙な空白があります
 
-[{here's a link to another page}](other_page.html)
-
-
-### an h3 
+[{別のページへのリンクはこちら}](other_page.html)
 
 
-> This is a simple blockquote, nothing too fancy here
+### a h3
+
+
+>これは単純なブロッククォートであり、ここではあまり凝ったものではありません
 !code!
-let mut this = "an actual code block";
-this = ["this is", &this].concat();
-	// here's some indentation
+mut this = "実際のコードブロック";
+this = ["this is"、＆this] .concat（）;
+//ここにいくつかのインデントがあります
 !code!
+
+ここにいくつかのユニコードがあります：早同期超長太
