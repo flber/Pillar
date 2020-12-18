@@ -1,6 +1,8 @@
 # Pillar
 A simple site generator with template support, written in plain Rust with the only dependency being `unicode-segmentation`.
 
+## Now with unicode support!
+
 Used in [[my site]](https://mineralexistence.com)
 
 A nice little demo is available in the `examples/` folder of this repo, which shows off Pillar's features (and honestly is mostly a place for me to test and debug)
