@@ -5,7 +5,7 @@ A simple site generator with template support, written in plain Rust with the on
 
 Used in [[my site]](https://mineralexistence.com)
 
-A nice little demo is available in the `examples/` folder of this repo, which shows off Pillar's features (and honestly is mostly a place for me to test and debug)
+A nice little demo is available in the `examples/` folder of this repo, which shows off Pillar's features (and honestly is mostly a place for me to test and debug). The main page is currently in (probably totally meaningless) Japanese, to stress test the unicode support.
 
 Pillar uses the marble markup format, which is quite similar to markdown but with a few changes:
 - Like markdown, headers are defined with `#`. Marble has support for header levels 1 to 3 (because when are you really using anything smaller?)
