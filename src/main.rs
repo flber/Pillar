@@ -476,29 +476,29 @@ fn a(s: &String) -> String {
 
 fn em(s: &String) -> String {
     let mut line = s.clone();
-    let mut astrices = Vec::<usize>::new();
+    let mut astrices = 0;
 
 	for i in 0..len(&line) {
 		let char = slice(&line, i..i+1);
 		if char == "*" {
-			astrices.push(i);
+			astrices += 1;
 		}
 	}
 
-	if astrices.len() % 2 == 1 {
-		astrices.pop();
-	}
+	if astrices % 2 == 1 { astrices -= 1; }
+	if astrices < 2 { return line }
 
-	let num = astrices.len();
-	for _i in 0..num {
-		let index = match astrices.pop(){
-			Some(i) => i,
-			None => return line
-		};
-		if astrices.len() % 2 == 1 {
-			line = insert(&line, index, "</em>");
-		} else {
-			line = insert(&line, index, "<em>");
+	loop {
+		match line.find("*") {
+			Some(i) => {
+				if astrices % 2 == 0 {
+					line.replace_range(i..i+1, "<em>");
+				} else {
+					line.replace_range(i..i+1, "</em>");
+				}
+				astrices -= 1;
+			},
+			None => break,
 		}
 	}
 
