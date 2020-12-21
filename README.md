@@ -16,6 +16,7 @@ Pillar uses the marble markup format, which is quite similar to markdown but wit
 - Blockquotes use the same syntax as markdown, a `>` with as much or as little whitespace before and after as you want.
 - To define a code block use `!code!` at the top and bottom of your code block
 - {{date}} replaces with the date the content was last modified (the marble, not the html itself)
+- {{music}} replaces with an unordered list of your album directory names in a designated music path
 
 I'm also planning on adding several more niche elements to the marble format, so that list above will grow over time.
 

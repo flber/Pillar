@@ -21,6 +21,8 @@ const TEMPLATE_PATH: &str = "templates/";
 const MARBLE_PATH: &str = "pages/";
 const HTML_PATH: &str = "docs/";
 
+const MUSIC_PATH: &str = "/home/benh/Music/";
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -47,16 +49,37 @@ fn main() {
                                 let path = format!("{:?}", entry.path());
                                 let path_str = slice(&path, 1..len(&path) - 1);
 
-                                let contents = fs::read_to_string(&path_str).expect(
+                                let mut contents = fs::read_to_string(&path_str).expect(
                                     format!("Something went wrong reading {}", path_str).as_str(),
                                 );
 
                                 let metadata = fs::metadata(&path_str).expect(
                                     format!("couldn't read metadata from {}", path_str).as_str(),
                                 );
+                                
                                 let last_modified = &metadata.mtime().to_string();
                                 let date = calc_date(last_modified.to_string());
                                 let short_date = format!("{}{}{}", date.0, date.1, &date.2[2..]);
+
+								let mut music = String::new();
+                                match fs::read_dir(MUSIC_PATH) {
+									Ok(albums) => {
+										for album in albums {
+											match album {
+												Ok(album) => {
+													music.push_str("- ");
+													music.push_str(&format!("{:?}", album.path()));
+													music.push_str("\n");
+												},
+												Err(e) => println!("Failed to open an album with error {}", e),
+											}
+										}
+									},
+									Err(e) => println!("Failed to open {} with error {}", MUSIC_PATH, e),
+                                }
+                                music = replace(&music, MUSIC_PATH, "");
+                                music = replace(&music, "\"", "");
+                                contents = replace(&contents, "{{music}}", &music);
                                 
                                 let split_contents = contents.lines();
                                 let str_lines: Vec<&str> = split_contents.collect();
