@@ -20,8 +20,9 @@ const HELP_MENU: &str = "Builds static site from marble files \n\
 const TEMPLATE_PATH: &str = "templates/";
 const MARBLE_PATH: &str = "pages/";
 const HTML_PATH: &str = "docs/";
-
 const MUSIC_PATH: &str = "/home/benh/Music/";
+
+const LATEST_LENGTH: usize = 15;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -61,25 +62,75 @@ fn main() {
                                 let date = calc_date(last_modified.to_string());
                                 let short_date = format!("{}{}{}", date.0, date.1, &date.2[2..]);
 
-								let mut music = String::new();
-                                match fs::read_dir(MUSIC_PATH) {
-									Ok(albums) => {
-										for album in albums {
-											match album {
-												Ok(album) => {
-													music.push_str("- ");
-													music.push_str(&format!("{:?}", album.path()));
-													music.push_str("\n");
-												},
-												Err(e) => println!("Failed to open an album with error {}", e),
+								if contents.contains("{{music}}") {
+									let mut music = String::new();
+	                                match fs::read_dir(MUSIC_PATH) {
+										Ok(albums) => {
+											for album in albums {
+												match album {
+													Ok(a) => {
+														music.push_str("- ");
+														music.push_str(&format!("{:?}", a.path()));
+														music.push_str("\n");
+													},
+													Err(e) => println!("Failed to open an album with error {}", e),
+												}
 											}
-										}
-									},
-									Err(e) => println!("Failed to open {} with error {}", MUSIC_PATH, e),
+										},
+										Err(e) => println!("Failed to open {} with error {}", MUSIC_PATH, e),
+	                                }
+	                                music = replace(&music, MUSIC_PATH, "");
+	                                music = replace(&music, "\"", "");
+	                                contents = replace(&contents, "{{music}}", &music);
                                 }
-                                music = replace(&music, MUSIC_PATH, "");
-                                music = replace(&music, "\"", "");
-                                contents = replace(&contents, "{{music}}", &music);
+
+								if contents.contains("{{latest}}") {
+									let mut posts = Vec::<(String, String, String)>::new();
+	                                match fs::read_dir(MARBLE_PATH) {
+										Ok(pages) => {
+											for page in pages {
+												match page {
+													Ok(p) => {
+														let page_path = format!("{:?}", p.path());
+														let page_path_str = slice(&page_path, 1..len(&page_path)-1);
+						                                let page_metadata = fs::metadata(&page_path_str).expect(
+						                                    format!("couldn't read metadata from {}", page_path_str).as_str(),
+						                                );
+						                                let page_last_modified = &page_metadata.mtime().to_string();
+						                                let page_date = calc_date(page_last_modified.to_string());
+						                                let page_short_date = format!("{}{}{}", page_date.0, page_date.1, &page_date.2[2..]);
+														posts.push((page_path_str, page_short_date, page_last_modified.to_string()));
+													},
+													Err(e) => println!("Failed to open a page with error {}", e),
+												}
+											}
+										},
+										Err(e) => println!("Failed to open {} with error {}", MARBLE_PATH, e),
+	                                }
+	                                posts.sort_by(|a, b| a.2.cmp(&b.2));
+	                                posts.reverse();
+	                                let mut posts_list = String::new();
+	                                for i in 0..posts.len() {
+	                                	if i < LATEST_LENGTH {
+											posts_list.push_str("- ");
+											// fix this with page metadata parsing
+											posts_list.push_str(posts[i].1.as_str());
+											posts_list.push_str(" [{");
+											let mut title = replace(&posts[i].0, MARBLE_PATH, "");
+											title = replace(&title, ".mr", "");
+											posts_list.push_str(&title);
+											posts_list.push_str("}](");
+											let mut relative_path = replace(&posts[i].0, MARBLE_PATH, "");
+											relative_path = replace(&relative_path, ".mr", ".html");
+											posts_list.push_str(&relative_path);
+											posts_list.push_str(")");
+											posts_list.push_str("\n");
+	                                	} else {
+	                                		break
+	                                	}
+	                                }
+	                                contents = replace(&contents, "{{latest}}", &posts_list);
+                                }
                                 
                                 let split_contents = contents.lines();
                                 let str_lines: Vec<&str> = split_contents.collect();

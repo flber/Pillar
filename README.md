@@ -17,6 +17,7 @@ Pillar uses the marble markup format, which is quite similar to markdown but wit
 - To define a code block use `!code!` at the top and bottom of your code block
 - {{date}} replaces with the date the content was last modified (the marble, not the html itself)
 - {{music}} replaces with an unordered list of your album directory names in a designated music path
+- {{latest}} replaces with a given number of the latest updated pages in an unordered list
 
 I'm also planning on adding several more niche elements to the marble format, so that list above will grow over time.
 
