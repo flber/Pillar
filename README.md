@@ -16,8 +16,10 @@ Pillar uses the marble markup format, which is quite similar to markdown but wit
 - Blockquotes use the same syntax as markdown, a `>` with as much or as little whitespace before and after as you want.
 - To define a code block use `!code!` at the top and bottom of your code block
 - To define a metadata header, put `!meta!` at the top and bottom of your variables
-	- currently the only variable which will do anything is the `title` variable, which is used to set the title for the `{{latest}}` substitution
+	- variables are declared with the `name: value` pattern (it's not too particular about whitespace)
+	- the `title` variable is used to set the title for the `{{latest}}` substitution
 	- without this deceleration the `{{latest}}` substitution will just use trimmed filenames
+	- the `template` variable sets the template for the page, defaulting to `default`, where the value is the file name (without extension) of a template in the given template directory
 - `{{date}}` replaces with the date the content was last modified (the marble, not the html itself)
 - `{{music}}` replaces with an unordered list of your album directory names in a designated music path
 - `{{latest}}` replaces with a given number of the latest updated pages in an unordered list
