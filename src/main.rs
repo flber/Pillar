@@ -121,17 +121,7 @@ fn main() {
 											posts_list.push_str(posts[i].1.as_str());
 											posts_list.push_str(" [{");
 
-			                                let contents = fs::read_to_string(&posts[i].0).expect(
-			                                    format!("Something went wrong reading {}", &posts[i].0).as_str(),
-			                                );
-			                                let split_contents = contents.lines();
-			                                let str_lines: Vec<&str> = split_contents.collect();
-			                                let mut lines = Vec::<String>::new();
-			                                for str_line in str_lines {
-			                                    let mut line = String::new();
-			                                    line.push_str(str_line);
-			                                    lines.push(line);
-			                                }
+											let lines = file_to_lines(&posts[i].0);
 			                                let mut title = String::from("");
 											let header_meta = parse_header(lines).1;
 											for header_var in header_meta {
@@ -144,10 +134,8 @@ fn main() {
 												let mut title = replace(&posts[i].0, MARBLE_PATH, "");
 												title = replace(&title, ".mr", "");
 												posts_list.push_str(&title);
-												println!("no header, going with: {}", title);
 											} else {
 												posts_list.push_str(&title);
-												println!("header, going with: {}", title);
 											}
 											posts_list.push_str("}](");
 											let mut relative_path = replace(&posts[i].0, MARBLE_PATH, "");
@@ -244,6 +232,21 @@ fn main() {
         }
         _ => println!("{}", HELP_MENU),
     }
+}
+
+fn file_to_lines(path: &str) -> Vec<String> {
+	let contents = fs::read_to_string(path).expect(
+	    format!("Something went wrong reading {}", path).as_str(),
+	);
+	let split_contents = contents.lines();
+	let str_lines: Vec<&str> = split_contents.collect();
+	let mut lines = Vec::<String>::new();
+	for str_line in str_lines {
+	    let mut line = String::new();
+	    line.push_str(str_line);
+	    lines.push(line);
+	}
+	return lines
 }
 
 struct Metadata {
