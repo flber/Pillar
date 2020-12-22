@@ -99,7 +99,12 @@ fn main() {
 						                                let page_last_modified = &page_metadata.mtime().to_string();
 						                                let page_date = calc_date(page_last_modified.to_string());
 						                                let page_short_date = format!("{}{}{}", page_date.0, page_date.1, &page_date.2[2..]);
-														posts.push((page_path_str, page_short_date, page_last_modified.to_string()));
+						                                
+														posts.push(
+															(page_path_str, 
+															page_short_date, 
+															page_last_modified.to_string())
+														);
 													},
 													Err(e) => println!("Failed to open a page with error {}", e),
 												}
@@ -113,12 +118,37 @@ fn main() {
 	                                for i in 0..posts.len() {
 	                                	if i < LATEST_LENGTH {
 											posts_list.push_str("- ");
-											// fix this with page metadata parsing
 											posts_list.push_str(posts[i].1.as_str());
 											posts_list.push_str(" [{");
-											let mut title = replace(&posts[i].0, MARBLE_PATH, "");
-											title = replace(&title, ".mr", "");
-											posts_list.push_str(&title);
+
+			                                let contents = fs::read_to_string(&posts[i].0).expect(
+			                                    format!("Something went wrong reading {}", &posts[i].0).as_str(),
+			                                );
+			                                let split_contents = contents.lines();
+			                                let str_lines: Vec<&str> = split_contents.collect();
+			                                let mut lines = Vec::<String>::new();
+			                                for str_line in str_lines {
+			                                    let mut line = String::new();
+			                                    line.push_str(str_line);
+			                                    lines.push(line);
+			                                }
+			                                let mut title = String::from("");
+											let header_meta = parse_header(lines).1;
+											for header_var in header_meta {
+												if header_var.name == "title" {
+													title = header_var.value;
+												}
+											}
+											
+											if title == "" { 
+												let mut title = replace(&posts[i].0, MARBLE_PATH, "");
+												title = replace(&title, ".mr", "");
+												posts_list.push_str(&title);
+												println!("no header, going with: {}", title);
+											} else {
+												posts_list.push_str(&title);
+												println!("header, going with: {}", title);
+											}
 											posts_list.push_str("}](");
 											let mut relative_path = replace(&posts[i].0, MARBLE_PATH, "");
 											relative_path = replace(&relative_path, ".mr", ".html");
@@ -142,7 +172,8 @@ fn main() {
                                     lines.push(line);
                                 }
 
-                                let parsed = parse_marble(lines).join("");
+								let wo_header = parse_header(lines).0;
+                                let parsed = parse_marble(wo_header).join("");
 
                                 let default_template_path =
                                     [TEMPLATE_PATH, "default.html"].concat();
@@ -213,6 +244,45 @@ fn main() {
         }
         _ => println!("{}", HELP_MENU),
     }
+}
+
+struct Metadata {
+	name: String,
+	value: String
+}
+
+fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
+	let mut output = Vec::<String>::new();
+	let mut meta = Vec::<Metadata>::new();
+
+    let mut in_reserved = false;
+    for i in 0..lines.len() {
+        let mut line = lines[i].clone();
+        let first = first(&line).1;
+        if len(&line) >= first + 6 {
+            if slice(&line, first..first + 6) == "!meta!" && !in_reserved {
+                in_reserved = true;
+                line = String::from("");
+            } else if slice(&line, first..first + 6) == "!meta!" && in_reserved {
+                line = String::from("");
+                in_reserved = false;
+            } else if in_reserved {
+                match line.find(":") {
+                	Some(c_index) => {
+		                let mut name = slice(&line, 0..c_index);
+		                name = trim(&name, 0, 0);
+		                let mut value = slice(&line, c_index+1..len(&line));
+		                value = trim(&value, 0, 0);
+		                meta.push(Metadata {name, value});
+                	},
+                	None => ()
+                };
+                line = String::from("");
+            }
+        }
+        output.push(line);
+    }
+    return (output, meta);
 }
 
 fn parse_marble(lines: Vec<String>) -> Vec<String> {
@@ -603,26 +673,7 @@ fn h(s: &String) -> String {
     }
 
     if is_header {
-        let mut hit_text = false;
-        for i in (0..len(&line) - 6).rev() {
-        	let next = slice(&line, i..i + 1);
-            if !hit_text && (next == " " || next == "\t") {
-                line = remove(&line, i, 1);
-            } else {
-                hit_text = true;
-            }
-        }
-        hit_text = false;
-        let mut i = 4;
-        while i < len(&line) - 5 {
-        	let next = slice(&line, i..i + 1);
-            if !hit_text && (next == " " || next == "\t") {
-                line = remove(&line, i, 1);
-            } else {
-                hit_text = true;
-                i += 1;
-            }
-        }
+        line = trim(&line, 4, 6);
     } else {
         line = s.clone();
         // line = insert(&s, 0, "<p>");
@@ -630,6 +681,31 @@ fn h(s: &String) -> String {
     }
 
     return line;
+}
+
+fn trim(l: &String, start: usize, end: usize) -> String {
+	let mut line = l.clone();
+	let mut hit_text = false;
+	for i in (0..len(&line) - end).rev() {
+		let next = slice(&line, i..i + 1);
+	    if !hit_text && (next == " " || next == "\t") {
+	        line = remove(&line, i, 1);
+	    } else {
+	        hit_text = true;
+	    }
+	}
+	hit_text = false;
+	let mut i = start;
+	while i < len(&line) - end {
+		let next = slice(&line, i..i + 1);
+	    if !hit_text && (next == " " || next == "\t") {
+	        line = remove(&line, i, 1);
+	    } else {
+	        hit_text = true;
+	        i += 1;
+	    }
+	}
+	return line
 }
 
 fn insert(s: &String, idx: usize, ins: &str) -> String {
