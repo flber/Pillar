@@ -160,15 +160,34 @@ fn main() {
                                     lines.push(line);
                                 }
 
-								let wo_header = parse_header(lines).0;
-                                let parsed = parse_marble(wo_header).join("");
-
-                                let default_template_path =
-                                    [TEMPLATE_PATH, "default.html"].concat();
-                                let template_contents = fs::read_to_string(default_template_path)
+								let mut template_file = String::from("default.html");
+								let header_meta = parse_header(lines.clone()).1;
+								for header_var in header_meta {
+									if header_var.name == "template" {
+										template_file = header_var.value;
+										template_file.push_str(".html");
+									}
+								}
+                                let template_path =
+                                    [TEMPLATE_PATH, &template_file].concat();
+                                    
+                                let template_contents = fs::read_to_string(&template_path)
                                     .expect("couldn't load default template");
+								let template_lines = file_to_lines(&template_path);
+                                
+								let mut whitespace = String::new();
+								for line in template_lines {
+									if line.contains("{{content}}") {
+										whitespace = slice(&line, 0..first(&line).1);
+									}
+								}
 
-                                let page = replace(&template_contents, "{{content}}", &parsed);
+								let wo_header = parse_header(lines).0;
+                                let parsed = parse_marble(wo_header, &whitespace).join("");
+								let mut con_w_space = String::from("{{content}}");
+								con_w_space = insert(&con_w_space, 0, &whitespace);				
+
+                                let page = replace(&template_contents, &con_w_space, &parsed);
                                 let page = replace(&page, "{{date}}", &short_date);
 
                                 let target = [
@@ -260,14 +279,12 @@ fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
 
     let mut in_reserved = false;
     for i in 0..lines.len() {
-        let mut line = lines[i].clone();
+        let line = lines[i].clone();
         let first = first(&line).1;
         if len(&line) >= first + 6 {
             if slice(&line, first..first + 6) == "!meta!" && !in_reserved {
                 in_reserved = true;
-                line = String::from("");
             } else if slice(&line, first..first + 6) == "!meta!" && in_reserved {
-                line = String::from("");
                 in_reserved = false;
             } else if in_reserved {
                 match line.find(":") {
@@ -280,15 +297,15 @@ fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
                 	},
                 	None => ()
                 };
-                line = String::from("");
+            } else {
+		        output.push(line);
             }
         }
-        output.push(line);
     }
     return (output, meta);
 }
 
-fn parse_marble(lines: Vec<String>) -> Vec<String> {
+fn parse_marble(lines: Vec<String>, whitespace: &String) -> Vec<String> {
     let mut output = Vec::<String>::new();
 
     // sets lines which shouldn't be parsed (code and page variables)
@@ -339,16 +356,19 @@ fn parse_marble(lines: Vec<String>) -> Vec<String> {
         }
     }
 
-    output = nl(&output);
+    output = nl(&output, &whitespace);
     
     return output;
 }
 
-fn nl(l: &Vec<String>) -> Vec<String> {
+fn nl(l: &Vec<String>, whitespace: &String) -> Vec<String> {
     let mut output = Vec::<String>::new();
     for i in 0..l.len() {
         let mut line = l[i].clone();
-        line.push_str("\n");
+        line = insert(&line, 0, &whitespace);
+        if i != l.len()-1 {
+	        line.push_str("\n");
+        }
         output.push(line.to_string());
     }
     return output;
