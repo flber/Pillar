@@ -15,15 +15,18 @@ Pillar uses the marble markup format, which is quite similar to markdown but wit
 - Ordered lists just use `~`, so no need for manually numbering your lists. Same indentation support as ordered lists.
 - Blockquotes use the same syntax as markdown, a `>` with as much or as little whitespace before and after as you want.
 - To define a code block use `!code!` at the top and bottom of your code block
-- {{date}} replaces with the date the content was last modified (the marble, not the html itself)
-- {{music}} replaces with an unordered list of your album directory names in a designated music path
-- {{latest}} replaces with a given number of the latest updated pages in an unordered list
+- To define a metadata header, put `!meta!` at the top and bottom of your variables
+	- currently the only variable which will do anything is the `title` variable, which is used to set the title for the `{{latest}}` substitution
+	- without this deceleration the `{{latest}}` substitution will just use trimmed filenames
+- `{{date}}` replaces with the date the content was last modified (the marble, not the html itself)
+- `{{music}}` replaces with an unordered list of your album directory names in a designated music path
+- `{{latest}}` replaces with a given number of the latest updated pages in an unordered list
 
 I'm also planning on adding several more niche elements to the marble format, so that list above will grow over time.
 
 Pillar also does some html substitutions to make templates more interesting
-- {{content}} is replaced with the content of a give marble page, parsed into html (sort of necessary)
-- {{date}} has the same behaviour as in marble
+- `{{content}}` is replaced with the content of a give marble page, parsed into html (sort of necessary)
+- `{{date}}` has the same behaviour as in marble
 
 ## Examples
 
