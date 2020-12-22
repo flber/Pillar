@@ -168,11 +168,18 @@ fn main() {
 										template_file.push_str(".html");
 									}
 								}
-                                let template_path =
+                                let mut template_path =
                                     [TEMPLATE_PATH, &template_file].concat();
                                     
-                                let template_contents = fs::read_to_string(&template_path)
-                                    .expect("couldn't load default template");
+                                let template_contents = match fs::read_to_string(&template_path) {
+                                	Ok(c) => c,
+                                	Err(_) => {
+                                		template_path = vec![TEMPLATE_PATH, "default.html"].concat();
+                                		fs::read_to_string(&template_path)
+                                			.expect("couldn't load default template")
+                                	}
+                                };
+
 								let template_lines = file_to_lines(&template_path);
                                 
 								let mut whitespace = String::new();
