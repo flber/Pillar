@@ -1,6 +1,6 @@
+use core::ops::Range;
 use std::env;
 use std::fs;
-use core::ops::Range;
 use std::os::unix::fs::MetadataExt;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -17,9 +17,11 @@ const HELP_MENU: &str = "Builds static site from marble files \n\
 						 \tbuild\tbuilds html from marble \n\
 						 \tclean\tclears html directory \n";
 
+// these paths are relative to the script
 const TEMPLATE_PATH: &str = "templates/";
 const MARBLE_PATH: &str = "pages/";
 const HTML_PATH: &str = "docs/";
+// this path is not (for me)
 const MUSIC_PATH: &str = "/home/benh/Music/";
 
 const LATEST_LENGTH: usize = 15;
@@ -31,10 +33,13 @@ fn main() {
         return ();
     }
 
+    // grabs the first argument
     let instruction = args[1].as_str();
 
     match instruction {
+        // gives version
         "-V" => println!("Pillar version {}", env!("CARGO_PKG_VERSION")),
+        //builds
         "build" => {
             // gets the marble files
             match fs::read_dir(MARBLE_PATH) {
@@ -50,106 +55,148 @@ fn main() {
                                 let path = format!("{:?}", entry.path());
                                 let path_str = slice(&path, 1..len(&path) - 1);
 
+                                // gets contents of marble file
                                 let mut contents = fs::read_to_string(&path_str).expect(
                                     format!("Something went wrong reading {}", path_str).as_str(),
                                 );
 
+                                //get metadata of marble file
                                 let metadata = fs::metadata(&path_str).expect(
                                     format!("couldn't read metadata from {}", path_str).as_str(),
                                 );
-                                
+
+                                // calculates the date in DDMMYY format
                                 let last_modified = &metadata.mtime().to_string();
                                 let date = calc_date(last_modified.to_string());
                                 let short_date = format!("{}{}{}", date.0, date.1, &date.2[2..]);
 
-								if contents.contains("{{music}}") {
-									let mut music = String::new();
-	                                match fs::read_dir(MUSIC_PATH) {
-										Ok(albums) => {
-											for album in albums {
-												match album {
-													Ok(a) => {
-														music.push_str("- ");
-														music.push_str(&format!("{:?}", a.path()));
-														music.push_str("\n");
-													},
-													Err(e) => println!("Failed to open an album with error {}", e),
-												}
-											}
-										},
-										Err(e) => println!("Failed to open {} with error {}", MUSIC_PATH, e),
-	                                }
-	                                music = replace(&music, MUSIC_PATH, "");
-	                                music = replace(&music, "\"", "");
-	                                contents = replace(&contents, "{{music}}", &music);
+                                // replaces music marker with an unordered list of folders in your music dir
+                                if contents.contains("{{music}}") {
+                                    let mut music = String::new();
+                                    match fs::read_dir(MUSIC_PATH) {
+                                        Ok(albums) => {
+                                            for album in albums {
+                                                match album {
+                                                    Ok(a) => {
+                                                        music.push_str("- ");
+                                                        music.push_str(&format!("{:?}", a.path()));
+                                                        music.push_str("\n");
+                                                    }
+                                                    Err(e) => println!(
+                                                        "Failed to open an album with error {}",
+                                                        e
+                                                    ),
+                                                }
+                                            }
+                                        }
+                                        Err(e) => println!(
+                                            "Failed to open {} with error {}",
+                                            MUSIC_PATH, e
+                                        ),
+                                    }
+                                    music = replace(&music, MUSIC_PATH, "");
+                                    music = replace(&music, "\"", "");
+                                    contents = replace(&contents, "{{music}}", &music);
                                 }
 
-								if contents.contains("{{latest}}") {
-									let mut posts = Vec::<(String, String, String)>::new();
-	                                match fs::read_dir(MARBLE_PATH) {
-										Ok(pages) => {
-											for page in pages {
-												match page {
-													Ok(p) => {
-														let page_path = format!("{:?}", p.path());
-														let page_path_str = slice(&page_path, 1..len(&page_path)-1);
-						                                let page_metadata = fs::metadata(&page_path_str).expect(
-						                                    format!("couldn't read metadata from {}", page_path_str).as_str(),
-						                                );
-						                                let page_last_modified = &page_metadata.mtime().to_string();
-						                                let page_date = calc_date(page_last_modified.to_string());
-						                                let page_short_date = format!("{}{}{}", page_date.0, page_date.1, &page_date.2[2..]);
-						                                
-														posts.push(
-															(page_path_str, 
-															page_short_date, 
-															page_last_modified.to_string())
-														);
-													},
-													Err(e) => println!("Failed to open a page with error {}", e),
-												}
-											}
-										},
-										Err(e) => println!("Failed to open {} with error {}", MARBLE_PATH, e),
-	                                }
-	                                posts.sort_by(|a, b| a.2.cmp(&b.2));
-	                                posts.reverse();
-	                                let mut posts_list = String::new();
-	                                for i in 0..posts.len() {
-	                                	if i < LATEST_LENGTH {
-											posts_list.push_str("- ");
-											posts_list.push_str(posts[i].1.as_str());
-											posts_list.push_str(" [{");
+                                // replaces latest marker with the `LATEST_LENGTH` most recently modified mr pages
+                                if contents.contains("{{latest}}") {
+                                    // this is a vec of [path, formatted date, epoch date]
+                                    let mut posts = Vec::<(String, String, String)>::new();
+                                    match fs::read_dir(MARBLE_PATH) {
+                                        Ok(pages) => {
+                                            for page in pages {
+                                                match page {
+                                                    Ok(p) => {
+                                                        let page_path = format!("{:?}", p.path());
+                                                        let page_path_str = slice(
+                                                            &page_path,
+                                                            1..len(&page_path) - 1,
+                                                        );
+                                                        let page_metadata =
+                                                            fs::metadata(&page_path_str).expect(
+                                                                format!(
+                                                                "couldn't read metadata from {}",
+                                                                page_path_str
+                                                            )
+                                                                .as_str(),
+                                                            );
+                                                        let page_last_modified =
+                                                            &page_metadata.mtime().to_string();
+                                                        let page_date = calc_date(
+                                                            page_last_modified.to_string(),
+                                                        );
+                                                        let page_short_date = format!(
+                                                            "{}{}{}",
+                                                            page_date.0,
+                                                            page_date.1,
+                                                            &page_date.2[2..]
+                                                        );
 
-											let lines = file_to_lines(&posts[i].0);
-			                                let mut title = String::from("");
-											let header_meta = parse_header(lines).1;
-											for header_var in header_meta {
-												if header_var.name == "title" {
-													title = header_var.value;
-												}
-											}
-											
-											if title == "" { 
-												let mut title = replace(&posts[i].0, MARBLE_PATH, "");
-												title = replace(&title, ".mr", "");
-												posts_list.push_str(&title);
-											} else {
-												posts_list.push_str(&title);
-											}
-											posts_list.push_str("}](");
-											let mut relative_path = replace(&posts[i].0, MARBLE_PATH, "");
-											relative_path = replace(&relative_path, ".mr", ".html");
-											posts_list.push_str(&relative_path);
-											posts_list.push_str(")");
-											posts_list.push_str("\n");
-	                                	} else {
-	                                		break
-	                                	}
-	                                }
-	                                contents = replace(&contents, "{{latest}}", &posts_list);
+                                                        posts.push((
+                                                            page_path_str,
+                                                            page_short_date,
+                                                            page_last_modified.to_string(),
+                                                        ));
+                                                    }
+                                                    Err(e) => println!(
+                                                        "Failed to open a page with error {}",
+                                                        e
+                                                    ),
+                                                }
+                                            }
+                                        }
+                                        Err(e) => println!(
+                                            "Failed to open {} with error {}",
+                                            MARBLE_PATH, e
+                                        ),
+                                    }
+                                    // sorts the list by epoch data from earliest to latest
+                                    posts.sort_by(|a, b| a.2.cmp(&b.2));
+                                    posts.reverse();
+                                    // an unordered list of the most recent posts
+                                    let mut posts_list = String::new();
+                                    for i in 0..posts.len() {
+                                        if i < LATEST_LENGTH {
+                                            posts_list.push_str("- ");
+                                            posts_list.push_str(posts[i].1.as_str());
+                                            posts_list.push_str(" [{");
+
+                                            let lines = file_to_lines(&posts[i].0);
+                                            let mut title = String::from("");
+                                            // gets the meta header from the post you're checking
+                                            let header_meta = parse_header(lines).1;
+                                            for header_var in header_meta {
+                                                if header_var.name == "title" {
+                                                    // gets the title of the post
+                                                    title = header_var.value;
+                                                }
+                                            }
+
+                                            if title == "" {
+                                                let mut title =
+                                                    replace(&posts[i].0, MARBLE_PATH, "");
+                                                title = replace(&title, ".mr", "");
+                                                posts_list.push_str(&title);
+                                            } else {
+                                                posts_list.push_str(&title);
+                                            }
+                                            posts_list.push_str("}](");
+                                            let mut relative_path =
+                                                replace(&posts[i].0, MARBLE_PATH, "");
+                                            relative_path = replace(&relative_path, ".mr", ".html");
+                                            posts_list.push_str(&relative_path);
+                                            posts_list.push_str(")");
+                                            posts_list.push_str("\n");
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                    // this is in the format of `- DDMMYY [{Title}](path)` where the path is modified to be an html file in the html dir
+                                    contents = replace(&contents, "{{latest}}", &posts_list);
                                 }
-                                
+
+                                // makes a vec of the marble file's lines
                                 let split_contents = contents.lines();
                                 let str_lines: Vec<&str> = split_contents.collect();
                                 let mut lines = Vec::<String>::new();
@@ -160,48 +207,59 @@ fn main() {
                                     lines.push(line);
                                 }
 
-								let mut template_file = String::from("default.html");
-								let header_meta = parse_header(lines.clone()).1;
-								for header_var in header_meta {
-									if header_var.name == "template" {
-										template_file = header_var.value;
-										template_file.push_str(".html");
-									}
-								}
-                                let mut template_path =
-                                    [TEMPLATE_PATH, &template_file].concat();
-                                    
+                                // starts with default template file
+                                let mut template_file = String::from("default.html");
+                                let header_meta = parse_header(lines.clone()).1;
+                                for header_var in header_meta {
+                                    if header_var.name == "template" {
+                                        // if the marble meta header has a template value, sets `template_file` to that
+                                        template_file = header_var.value;
+                                        template_file.push_str(".html");
+                                    }
+                                }
+                                let mut template_path = [TEMPLATE_PATH, &template_file].concat();
+
+                                // gets the contents of the given template file
                                 let template_contents = match fs::read_to_string(&template_path) {
-                                	Ok(c) => c,
-                                	Err(_) => {
-                                		template_path = vec![TEMPLATE_PATH, "default.html"].concat();
-                                		fs::read_to_string(&template_path)
-                                			.expect("couldn't load default template")
-                                	}
+                                    Ok(c) => c,
+                                    Err(_) => {
+                                        // if it can't be loaded, just load the default
+                                        template_path =
+                                            vec![TEMPLATE_PATH, "default.html"].concat();
+                                        fs::read_to_string(&template_path)
+                                            .expect("couldn't load default template")
+                                    }
                                 };
 
-								let template_lines = file_to_lines(&template_path);
-                                
-								let mut whitespace = String::new();
-								for line in template_lines {
-									if line.contains("{{content}}") {
-										whitespace = slice(&line, 0..first(&line).1);
-									}
-								}
+                                let template_lines = file_to_lines(&template_path);
 
-								let wo_header = parse_header(lines).0;
+                                // figures out how indented the content marker is
+                                let mut whitespace = String::new();
+                                for line in template_lines {
+                                    if line.contains("{{content}}") {
+                                        whitespace = slice(&line, 0..first(&line).1);
+                                    }
+                                }
+
+                                // removes the meta header and parses
+                                let wo_header = parse_header(lines).0;
                                 let parsed = parse_marble(wo_header, &whitespace).join("");
-								let mut con_w_space = String::from("{{content}}");
-								con_w_space = insert(&con_w_space, 0, &whitespace);				
+                                let mut con_w_space = String::from("{{content}}");
+                                con_w_space = insert(&con_w_space, 0, &whitespace);
 
+                                // replaces content and date markers
                                 let page = replace(&template_contents, &con_w_space, &parsed);
                                 let page = replace(&page, "{{date}}", &short_date);
 
                                 let target = [
                                     HTML_PATH,
-                                    &slice(&path, len(&MARBLE_PATH.to_string()) + 1..len(&path) - 3),
+                                    &slice(
+                                        &path,
+                                        len(&MARBLE_PATH.to_string()) + 1..len(&path) - 3,
+                                    ),
                                     "html",
-                                ].concat();
+                                ]
+                                .concat();
                                 println!("+ {}", target);
                                 match fs::write(&target, &page) {
                                     Ok(_) => (),
@@ -220,6 +278,7 @@ fn main() {
                 }
             }
         }
+        // deletes html files in html path
         "clean" => {
             match fs::read_dir(HTML_PATH) {
                 // unpacks the entries result
@@ -260,29 +319,40 @@ fn main() {
     }
 }
 
+/*
+opens a file
+reads to a vec of &str
+returns vec of String
+*/
 fn file_to_lines(path: &str) -> Vec<String> {
-	let contents = fs::read_to_string(path).expect(
-	    format!("Something went wrong reading {}", path).as_str(),
-	);
-	let split_contents = contents.lines();
-	let str_lines: Vec<&str> = split_contents.collect();
-	let mut lines = Vec::<String>::new();
-	for str_line in str_lines {
-	    let mut line = String::new();
-	    line.push_str(str_line);
-	    lines.push(line);
-	}
-	return lines
+    let contents =
+        fs::read_to_string(path).expect(format!("Something went wrong reading {}", path).as_str());
+    let split_contents = contents.lines();
+    let str_lines: Vec<&str> = split_contents.collect();
+    let mut lines = Vec::<String>::new();
+    for str_line in str_lines {
+        let mut line = String::new();
+        line.push_str(str_line);
+        lines.push(line);
+    }
+    return lines;
 }
 
 struct Metadata {
-	name: String,
-	value: String
+    name: String,
+    value: String,
 }
 
+/*
+goes through the given String lines
+figures out if it's in the meta heading
+if it is, it starts generating a list of name: value pairs
+if it isn't, it just adds the line to the output
+it then returns a vec of Strings (the post), and a vec of Metadata (the name: value pairs)
+*/
 fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
-	let mut output = Vec::<String>::new();
-	let mut meta = Vec::<Metadata>::new();
+    let mut output = Vec::<String>::new();
+    let mut meta = Vec::<Metadata>::new();
 
     let mut in_reserved = false;
     for i in 0..lines.len() {
@@ -295,23 +365,33 @@ fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
                 in_reserved = false;
             } else if in_reserved {
                 match line.find(":") {
-                	Some(c_index) => {
-		                let mut name = slice(&line, 0..c_index);
-		                name = trim(&name, 0, 0);
-		                let mut value = slice(&line, c_index+1..len(&line));
-		                value = trim(&value, 0, 0);
-		                meta.push(Metadata {name, value});
-                	},
-                	None => ()
+                    Some(c_index) => {
+                        let mut name = slice(&line, 0..c_index);
+                        name = trim(&name, 0, 0);
+                        let mut value = slice(&line, c_index + 1..len(&line));
+                        value = trim(&value, 0, 0);
+                        meta.push(Metadata { name, value });
+                    }
+                    None => (),
                 };
             } else {
-		        output.push(line);
+                output.push(line);
             }
         }
     }
     return (output, meta);
 }
 
+/*
+starts by pulling out lines in `!code!` blocks
+replaces `!code!` markers with respective html elements
+puts them into a reserved vec
+replaces the line with a marker for later
+goes through each line and does single line formatting
+does multi line formating
+adds back reserved lines
+returns parsed lines
+*/
 fn parse_marble(lines: Vec<String>, whitespace: &String) -> Vec<String> {
     let mut output = Vec::<String>::new();
 
@@ -348,13 +428,13 @@ fn parse_marble(lines: Vec<String>, whitespace: &String) -> Vec<String> {
         }
     }
     // multi-line formatting goes out here
-    output = ul(&output);
-    output = ol(&output);
+    output = list(&output, "-");
+    output = list(&output, "~");
     output = blockquote(&output);
 
     output = p(&output);
 
-	// adds back lines which were reserved
+    // adds back lines which were reserved
     let mut reserved_index = 0;
     for i in 0..output.len() {
         if output[i].contains("!reserved!") {
@@ -364,23 +444,30 @@ fn parse_marble(lines: Vec<String>, whitespace: &String) -> Vec<String> {
     }
 
     output = nl(&output, &whitespace);
-    
+
     return output;
 }
 
+/*
+adds given whitespace to start of each line
+adds a \n to the end of each line
+*/
 fn nl(l: &Vec<String>, whitespace: &String) -> Vec<String> {
     let mut output = Vec::<String>::new();
     for i in 0..l.len() {
         let mut line = l[i].clone();
         line = insert(&line, 0, &whitespace);
-        if i != l.len()-1 {
-	        line.push_str("\n");
+        if i != l.len() - 1 {
+            line.push_str("\n");
         }
         output.push(line.to_string());
     }
     return output;
 }
 
+/*
+if the line doesn't have any special formatting adds paragraph elements
+*/
 fn p(l: &Vec<String>) -> Vec<String> {
     let mut output = Vec::<String>::new();
     for i in 0..l.len() {
@@ -398,6 +485,9 @@ fn p(l: &Vec<String>) -> Vec<String> {
     return output;
 }
 
+/*
+adds blockquote elements
+*/
 fn blockquote(l: &Vec<String>) -> Vec<String> {
     let mut output = Vec::<String>::new();
     let mut i = 0;
@@ -423,8 +513,25 @@ fn blockquote(l: &Vec<String>) -> Vec<String> {
     return output;
 }
 
-fn ol(l: &Vec<String>) -> Vec<String> {
+/*
+decides which type of list it should be making based on the given type
+figures out when list starts and adds appropriate element
+if the "level" (whitespace) increases, it adds a new list element before adding the line
+if the "level" decreases, it adds a close list element after adding the line
+once the list ends, it adds the necessary number of close list elements
+*/
+fn list(l: &Vec<String>, point: &str) -> Vec<String> {
     let mut output = Vec::<String>::new();
+
+    let mut start = String::from("");
+    let mut end = String::from("");
+    if point == "-" {
+        start = String::from("<ul>");
+        end = String::from("</ul>");
+    } else if point == "~" {
+        start = String::from("<ol>");
+        end = String::from("</ol>");
+    }
 
     let mut in_list = false;
     let mut level = 0;
@@ -435,15 +542,15 @@ fn ol(l: &Vec<String>) -> Vec<String> {
         let char = first(&line).0;
         let space = first(&line).1;
 
-        if char == "~" {
+        if char == point {
             if !in_list {
                 in_list = true;
                 level = space;
-                output.push(String::from("<ol>"));
+                output.push(String::from(&start));
             }
             if space > level {
                 for _j in 0..space - level {
-                    output.push(String::from("<ol>"));
+                    output.push(String::from(&start));
                 }
                 line = remove(&line, 0, first(&line).1);
                 line.remove(0);
@@ -452,7 +559,7 @@ fn ol(l: &Vec<String>) -> Vec<String> {
                 line = insert(&line, len(&line), "</li>");
             } else if space < level {
                 for _j in 0..level - space {
-                    output.push(String::from("</ol>"));
+                    output.push(String::from(&end));
                 }
                 line = remove(&line, 0, first(&line).1);
                 line.remove(0);
@@ -467,96 +574,33 @@ fn ol(l: &Vec<String>) -> Vec<String> {
                 line = insert(&line, len(&line), "</li>");
             }
             level = space;
-        } else if char != "~" && in_list {
+        } else if char != point && in_list {
             in_list = false;
             for _j in 0..level + 1 {
-                output.push(String::from("</ol>"));
+                output.push(String::from(&end));
             }
             level = 0;
         }
-        
+
         output.push(line.to_string());
 
-        if i == l.len()-1 && in_list {
+        if i == l.len() - 1 && in_list {
             in_list = false;
             for _j in 0..level + 1 {
-                output.push(String::from("</ol>"));
+                output.push(String::from(&end));
             }
             level = 0;
         }
-        
+
         i += 1;
     }
 
     return output;
 }
 
-fn ul(l: &Vec<String>) -> Vec<String> {
-    let mut output = Vec::<String>::new();
-
-    let mut in_list = false;
-    let mut level = 0;
-
-    let mut i = 0;
-    while i < l.len() {
-        let mut line = l[i].clone();
-        let char = first(&line).0;
-        let space = first(&line).1;
-
-        if char == "-" {
-            if !in_list {
-                in_list = true;
-                level = space;
-                output.push(String::from("<ul>"));
-            }
-            if space > level {
-                for _j in 0..space - level {
-                    output.push(String::from("<ul>"));
-                }
-                line = remove(&line, 0, first(&line).1);
-                line.remove(0);
-                line = remove(&line, 0, first(&line).1);
-                line = insert(&line, 0, "<li>");
-                line = insert(&line, len(&line), "</li>");
-            } else if space < level {
-                for _j in 0..level - space {
-                    output.push(String::from("</ul>"));
-                }
-                line = remove(&line, 0, first(&line).1);
-                line.remove(0);
-                line = remove(&line, 0, first(&line).1);
-                line = insert(&line, 0, "<li>");
-                line = insert(&line, len(&line), "</li>");
-            } else {
-                line = remove(&line, 0, first(&line).1);
-                line.remove(0);
-                line = remove(&line, 0, first(&line).1);
-                line = insert(&line, 0, "<li>");
-                line = insert(&line, len(&line), "</li>");
-            }
-            level = space;
-        } else if (char != "-" || i == l.len()-1) && in_list {
-            in_list = false;
-            for _j in 0..level + 1 {
-                output.push(String::from("</ul>"));
-            }
-            level = 0;
-        }
-        output.push(line.to_string());
-
-        if i == l.len()-1 && in_list {
-            in_list = false;
-            for _j in 0..level + 1 {
-                output.push(String::from("</ul>"));
-            }
-            level = 0;
-        }
-        
-        i += 1;
-    }
-    return output;
-}
-
+/*
+finds and formats images
+*/
 fn img(s: &String) -> String {
     let mut line = s.clone();
     let mut in_bracket = false;
@@ -583,19 +627,19 @@ fn img(s: &String) -> String {
             let temp_line = line.clone();
             let link = slice(&temp_line, i_paren + 1..i);
             // adds the close img
-            line = insert(&line, i+1, "\"/>");
+            line = insert(&line, i + 1, "\"/>");
             // removes the closing bracket and link portion
             line = remove(&line, i_paren - 1, i - i_paren + 2);
             // removes opening bracket and !
             line = remove(&line, i_bracket - 1, 2);
             // inserts img and alt
-            line = insert(&line, i_bracket-1, "<img alt=\"");
+            line = insert(&line, i_bracket - 1, "<img alt=\"");
             // adds src to img
-            line = insert(&line, i_bracket+4, "src=\"");
+            line = insert(&line, i_bracket + 4, "src=\"");
             // adds image link to src
-            line = insert(&line, i_bracket+9, &link);
+            line = insert(&line, i_bracket + 9, &link);
             // closes src
-            line = insert(&line, i_bracket+9+len(&link), "\" ");
+            line = insert(&line, i_bracket + 9 + len(&link), "\" ");
         }
         i += 1;
     }
@@ -603,6 +647,9 @@ fn img(s: &String) -> String {
     return line;
 }
 
+/*
+finds and formats links
+*/
 fn a(s: &String) -> String {
     let mut line = s.clone();
     let mut in_bracket = false;
@@ -648,55 +695,67 @@ fn a(s: &String) -> String {
     return line;
 }
 
+/*
+goes through the line and replaces "*"'s with an even number of em elements
+leaves out the last one if the total number if odd
+*/
 fn em(s: &String) -> String {
     let mut line = s.clone();
     let mut astrices = 0;
 
-	for i in 0..len(&line) {
-		let char = slice(&line, i..i+1);
-		if char == "*" {
-			astrices += 1;
-		}
-	}
+    for i in 0..len(&line) {
+        let char = slice(&line, i..i + 1);
+        if char == "*" {
+            astrices += 1;
+        }
+    }
 
-	if astrices % 2 == 1 { astrices -= 1; }
-	if astrices < 2 { return line }
+    if astrices % 2 == 1 {
+        astrices -= 1;
+    }
+    if astrices < 2 {
+        return line;
+    }
 
-	loop {
-		match line.find("*") {
-			Some(i) => {
-				if astrices % 2 == 0 {
-					line.replace_range(i..i+1, "<em>");
-				} else {
-					line.replace_range(i..i+1, "</em>");
-				}
-				astrices -= 1;
-			},
-			None => break,
-		}
-	}
+    loop {
+        match line.find("*") {
+            Some(i) => {
+                if astrices % 2 == 0 {
+                    line.replace_range(i..i + 1, "<em>");
+                } else {
+                    line.replace_range(i..i + 1, "</em>");
+                }
+                astrices -= 1;
+            }
+            None => break,
+        }
+    }
 
     return line;
 }
 
-// change this, not written in same way as others
+/*
+trims line
+replaces headers with elements
+*/
 fn h(s: &String) -> String {
-    let mut line = String::new();
+    let mut line = s.clone();
+    line = trim(&line, 0, len(&line));
     let mut is_header = false;
 
-	let first = first(&s).1;
-    if len(&s) > first+2 && slice(&s, first..first+3) == "###" {
-        line = remove(&s, 0, first+3);
+    let first = first(&s).1;
+    if len(&s) > first + 2 && slice(&s, first..first + 3) == "###" {
+        line = remove(&s, 0, first + 3);
         line = insert(&line, 0, "<h3>");
         line = insert(&line, len(&line), "</h3>");
         is_header = true;
-    } else if len(&s) > first+1 && slice(&s, first..first+2) == "##" {
-        line = remove(&s, 0, first+2);
+    } else if len(&s) > first + 1 && slice(&s, first..first + 2) == "##" {
+        line = remove(&s, 0, first + 2);
         line = insert(&line, 0, "<h2>");
         line = insert(&line, len(&line), "</h2>");
         is_header = true;
-    } else if len(&s) > first && slice(&s, first..first+1) == "#" {
-        line = remove(&s, 0, first+1);
+    } else if len(&s) > first && slice(&s, first..first + 1) == "#" {
+        line = remove(&s, 0, first + 1);
         line = insert(&line, 0, "<h1>");
         line = insert(&line, len(&line), "</h1>");
         is_header = true;
@@ -713,31 +772,37 @@ fn h(s: &String) -> String {
     return line;
 }
 
+/*
+removes whitespace around given string from start and end indices
+*/
 fn trim(l: &String, start: usize, end: usize) -> String {
-	let mut line = l.clone();
-	let mut hit_text = false;
-	for i in (0..len(&line) - end).rev() {
-		let next = slice(&line, i..i + 1);
-	    if !hit_text && (next == " " || next == "\t") {
-	        line = remove(&line, i, 1);
-	    } else {
-	        hit_text = true;
-	    }
-	}
-	hit_text = false;
-	let mut i = start;
-	while i < len(&line) - end {
-		let next = slice(&line, i..i + 1);
-	    if !hit_text && (next == " " || next == "\t") {
-	        line = remove(&line, i, 1);
-	    } else {
-	        hit_text = true;
-	        i += 1;
-	    }
-	}
-	return line
+    let mut line = l.clone();
+    let mut hit_text = false;
+    for i in (0..len(&line) - end).rev() {
+        let next = slice(&line, i..i + 1);
+        if !hit_text && (next == " " || next == "\t") {
+            line = remove(&line, i, 1);
+        } else {
+            hit_text = true;
+        }
+    }
+    hit_text = false;
+    let mut i = start;
+    while i < len(&line) - end {
+        let next = slice(&line, i..i + 1);
+        if !hit_text && (next == " " || next == "\t") {
+            line = remove(&line, i, 1);
+        } else {
+            hit_text = true;
+            i += 1;
+        }
+    }
+    return line;
 }
 
+/*
+inserts str into string, preserving graphemes
+*/
 fn insert(s: &String, idx: usize, ins: &str) -> String {
     assert!(idx <= len(&s), "the index was larger than the target slice");
     let ins_len = len(&ins.to_string());
@@ -745,7 +810,7 @@ fn insert(s: &String, idx: usize, ins: &str) -> String {
     let mut r = String::with_capacity(fin_len);
     for i in 0..fin_len {
         if i < idx {
-            r.push_str(&slice(&s, i..i+1));
+            r.push_str(&slice(&s, i..i + 1));
         } else if i < idx + ins_len {
             let i_ins = i - idx;
             r.push_str(&slice(&ins.to_string(), i_ins..i_ins + 1));
@@ -754,29 +819,38 @@ fn insert(s: &String, idx: usize, ins: &str) -> String {
             r.push_str(&slice(&s, a_ins..a_ins + 1));
         }
     }
-    return r
+    return r;
 }
 
+/*
+replaces all target str in String with insert str
+*/
 fn replace(s: &String, target: &str, insert: &str) -> String {
     let mut source = s.clone();
-	loop {
-		match source.find(target) {
-			Some(i) => source.replace_range(i..i + len(&target.to_string()), insert),
-			None => break,
-		}
-	}
+    loop {
+        match source.find(target) {
+            Some(i) => source.replace_range(i..i + len(&target.to_string()), insert),
+            None => break,
+        }
+    }
     return source.to_string();
 }
 
+/*
+removes from String from index with length, preserving graphemes
+*/
 fn remove(s: &String, idx: usize, l: usize) -> String {
     assert!(idx <= len(&s), "the index was larger than the target slice");
 
     let first = slice(&s, 0..idx);
-    let second = slice(&s, idx+l..len(&s));
+    let second = slice(&s, idx + l..len(&s));
 
     return [first, second].concat();
 }
 
+/*
+returns the first character in a string, as well as the index of that string
+*/
 fn first(s: &String) -> (String, usize) {
     let line = s.clone();
     let mut num = 0;
@@ -791,24 +865,31 @@ fn first(s: &String) -> (String, usize) {
     return (String::from(""), num);
 }
 
+/*
+returns the length of a String, taking graphemes into account
+*/
 fn len(s: &String) -> usize {
-	let graphemes = UnicodeSegmentation::graphemes(&s[..], true)
-		.collect::<Vec<&str>>();
-	return graphemes.len()
+    let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
+    return graphemes.len();
 }
 
+/*
+returns a slice of a string from a range, utf-8 compliant
+*/
 fn slice(s: &String, r: Range<usize>) -> String {
-	let graphemes = UnicodeSegmentation::graphemes(&s[..], true)
-		.collect::<Vec<&str>>();
-	let mut sub_graph = Vec::<&str>::new();
-	for i in r {
-		sub_graph.push(graphemes[i]);
-	}
-	return sub_graph.join("")
+    let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
+    let mut sub_graph = Vec::<&str>::new();
+    for i in r {
+        sub_graph.push(graphemes[i]);
+    }
+    return sub_graph.join("");
 }
 
+/*
+returns a day, month, and year, from a given epoch number
+*/
 fn calc_date(s: String) -> (String, String, String) {
-	let mut _seconds = s.clone().parse::<i32>().unwrap();
+    let mut _seconds = s.clone().parse::<i32>().unwrap();
     let mut _minutes = _seconds / 60;
     _seconds -= _minutes * 60;
 
@@ -850,7 +931,7 @@ fn calc_date(s: String) -> (String, String, String) {
                 if days >= dim {
                     days -= dim;
                 } else {
-                	month = m;
+                    month = m;
                     break;
                 }
             }
