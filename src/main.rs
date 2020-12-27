@@ -373,6 +373,8 @@ fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
             } else {
                 output.push(line);
             }
+        } else {
+            output.push(line);
         }
     }
     (output, meta)
@@ -738,27 +740,28 @@ fn h(s: &String) -> String {
     line = trim(&line, 0, len(&line));
     let mut is_header = false;
 
-    let first = first(&s).1;
-    if len(&s) > first + 2 && slice(&s, first..first + 3) == "###" {
-        line = remove(&s, 0, first + 3);
+    let f = first(&s).1;
+    if len(&s) > f + 2 && slice(&s, f..f + 3) == "###" {
+        line = remove(&s, 0, f + 3);
+        line = remove(&line, 0, first(&line).1);
         line = insert(&line, 0, "<h3>");
         line = insert(&line, len(&line), "</h3>");
         is_header = true;
-    } else if len(&s) > first + 1 && slice(&s, first..first + 2) == "##" {
-        line = remove(&s, 0, first + 2);
+    } else if len(&s) > f + 1 && slice(&s, f..f + 2) == "##" {
+        line = remove(&s, 0, f + 2);
+        line = remove(&line, 0, first(&line).1);
         line = insert(&line, 0, "<h2>");
         line = insert(&line, len(&line), "</h2>");
         is_header = true;
-    } else if len(&s) > first && slice(&s, first..first + 1) == "#" {
-        line = remove(&s, 0, first + 1);
+    } else if len(&s) > f && slice(&s, f..f + 1) == "#" {
+        line = remove(&s, 0, f + 1);
+        line = remove(&line, 0, first(&line).1);
         line = insert(&line, 0, "<h1>");
         line = insert(&line, len(&line), "</h1>");
         is_header = true;
     }
 
-    if is_header {
-        line = trim(&line, 4, 6);
-    } else {
+    if !is_header {
         line = s.clone();
         // line = insert(&s, 0, "<p>");
         // line.insert_str(len(&line), "</p>");
