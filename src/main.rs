@@ -1,4 +1,5 @@
 use core::ops::Range;
+use std::cmp::Ordering;
 use std::env;
 use std::fs;
 use std::os::unix::fs::MetadataExt;
@@ -30,7 +31,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         println!("{}", HELP_MENU);
-        return ();
+        return;
     }
 
     // grabs the first argument
@@ -56,14 +57,15 @@ fn main() {
                                 let path_str = slice(&path, 1..len(&path) - 1);
 
                                 // gets contents of marble file
-                                let mut contents = fs::read_to_string(&path_str).expect(
-                                    format!("Something went wrong reading {}", path_str).as_str(),
-                                );
+                                let mut contents =
+                                    fs::read_to_string(&path_str).unwrap_or_else(|_| {
+                                        panic!("Something went wrong reading {}", path_str)
+                                    });
 
                                 //get metadata of marble file
-                                let metadata = fs::metadata(&path_str).expect(
-                                    format!("couldn't read metadata from {}", path_str).as_str(),
-                                );
+                                let metadata = fs::metadata(&path_str).unwrap_or_else(|_| {
+                                    panic!("couldn't read metadata from {}", path_str)
+                                });
 
                                 // calculates the date in DDMMYY format
                                 let last_modified = &metadata.mtime().to_string();
@@ -80,7 +82,7 @@ fn main() {
                                                     Ok(a) => {
                                                         music.push_str("- ");
                                                         music.push_str(&format!("{:?}", a.path()));
-                                                        music.push_str("\n");
+                                                        music.push('\n');
                                                     }
                                                     Err(e) => println!(
                                                         "Failed to open an album with error {}",
@@ -114,13 +116,13 @@ fn main() {
                                                             1..len(&page_path) - 1,
                                                         );
                                                         let page_metadata =
-                                                            fs::metadata(&page_path_str).expect(
-                                                                format!(
+                                                            fs::metadata(&page_path_str)
+                                                                .unwrap_or_else(|_| {
+                                                                    panic!(
                                                                 "couldn't read metadata from {}",
                                                                 page_path_str
                                                             )
-                                                                .as_str(),
-                                                            );
+                                                                });
                                                         let page_last_modified =
                                                             &page_metadata.mtime().to_string();
                                                         let page_date = calc_date(
@@ -156,13 +158,13 @@ fn main() {
                                     posts.reverse();
                                     // an unordered list of the most recent posts
                                     let mut posts_list = String::new();
-                                    for i in 0..posts.len() {
+                                    for (i, post) in posts.iter().enumerate() {
                                         if i < LATEST_LENGTH {
                                             posts_list.push_str("- ");
-                                            posts_list.push_str(posts[i].1.as_str());
+                                            posts_list.push_str(post.1.as_str());
                                             posts_list.push_str(" [{");
 
-                                            let lines = file_to_lines(&posts[i].0);
+                                            let lines = file_to_lines(&post.0);
                                             let mut title = String::from("");
                                             // gets the meta header from the post you're checking
                                             let header_meta = parse_header(lines).1;
@@ -173,9 +175,8 @@ fn main() {
                                                 }
                                             }
 
-                                            if title == "" {
-                                                let mut title =
-                                                    replace(&posts[i].0, MARBLE_PATH, "");
+                                            if title.is_empty() {
+                                                let mut title = replace(&post.0, MARBLE_PATH, "");
                                                 title = replace(&title, ".mr", "");
                                                 posts_list.push_str(&title);
                                             } else {
@@ -183,11 +184,11 @@ fn main() {
                                             }
                                             posts_list.push_str("}](");
                                             let mut relative_path =
-                                                replace(&posts[i].0, MARBLE_PATH, "");
+                                                replace(&post.0, MARBLE_PATH, "");
                                             relative_path = replace(&relative_path, ".mr", ".html");
                                             posts_list.push_str(&relative_path);
-                                            posts_list.push_str(")");
-                                            posts_list.push_str("\n");
+                                            posts_list.push(')');
+                                            posts_list.push('\n');
                                         } else {
                                             break;
                                         }
@@ -274,7 +275,6 @@ fn main() {
                 }
                 Err(e) => {
                     println!("Failed to open directory {} with error {}", MARBLE_PATH, e);
-                    return ();
                 }
             }
         }
@@ -311,7 +311,6 @@ fn main() {
                 }
                 Err(e) => {
                     println!("Failed to open directory {} with error {}", HTML_PATH, e);
-                    return ();
                 }
             }
         }
@@ -325,8 +324,8 @@ reads to a vec of &str
 returns vec of String
 */
 fn file_to_lines(path: &str) -> Vec<String> {
-    let contents =
-        fs::read_to_string(path).expect(format!("Something went wrong reading {}", path).as_str());
+    let contents = fs::read_to_string(path)
+        .unwrap_or_else(|_| panic!("Something went wrong reading {}", path));
     let split_contents = contents.lines();
     let str_lines: Vec<&str> = split_contents.collect();
     let mut lines = Vec::<String>::new();
@@ -335,7 +334,7 @@ fn file_to_lines(path: &str) -> Vec<String> {
         line.push_str(str_line);
         lines.push(line);
     }
-    return lines;
+    lines
 }
 
 struct Metadata {
@@ -355,8 +354,8 @@ fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
     let mut meta = Vec::<Metadata>::new();
 
     let mut in_reserved = false;
-    for i in 0..lines.len() {
-        let line = lines[i].clone();
+    for line_str in &lines {
+        let line = line_str.to_string();
         let first = first(&line).1;
         if len(&line) >= first + 6 {
             if slice(&line, first..first + 6) == "!meta!" && !in_reserved {
@@ -364,22 +363,19 @@ fn parse_header(lines: Vec<String>) -> (Vec<String>, Vec<Metadata>) {
             } else if slice(&line, first..first + 6) == "!meta!" && in_reserved {
                 in_reserved = false;
             } else if in_reserved {
-                match line.find(":") {
-                    Some(c_index) => {
-                        let mut name = slice(&line, 0..c_index);
-                        name = trim(&name, 0, 0);
-                        let mut value = slice(&line, c_index + 1..len(&line));
-                        value = trim(&value, 0, 0);
-                        meta.push(Metadata { name, value });
-                    }
-                    None => (),
-                };
+                if let Some(c_index) = line.find(':') {
+                    let mut name = slice(&line, 0..c_index);
+                    name = trim(&name, 0, 0);
+                    let mut value = slice(&line, c_index + 1..len(&line));
+                    value = trim(&value, 0, 0);
+                    meta.push(Metadata { name, value });
+                }
             } else {
                 output.push(line);
             }
         }
     }
-    return (output, meta);
+    (output, meta)
 }
 
 /*
@@ -392,7 +388,7 @@ does multi line formating
 adds back reserved lines
 returns parsed lines
 */
-fn parse_marble(lines: Vec<String>, whitespace: &String) -> Vec<String> {
+fn parse_marble(lines: Vec<String>, whitespace: &str) -> Vec<String> {
     let mut output = Vec::<String>::new();
 
     // sets lines which shouldn't be parsed (code and page variables)
@@ -445,30 +441,30 @@ fn parse_marble(lines: Vec<String>, whitespace: &String) -> Vec<String> {
 
     output = nl(&output, &whitespace);
 
-    return output;
+    output
 }
 
 /*
 adds given whitespace to start of each line
 adds a \n to the end of each line
 */
-fn nl(l: &Vec<String>, whitespace: &String) -> Vec<String> {
+fn nl(l: &[String], whitespace: &str) -> Vec<String> {
     let mut output = Vec::<String>::new();
     for i in 0..l.len() {
         let mut line = l[i].clone();
-        line = insert(&line, 0, &whitespace);
+        line = insert(&line, 0, whitespace);
         if i != l.len() - 1 {
-            line.push_str("\n");
+            line.push('\n');
         }
         output.push(line.to_string());
     }
-    return output;
+    output
 }
 
 /*
 if the line doesn't have any special formatting adds paragraph elements
 */
-fn p(l: &Vec<String>) -> Vec<String> {
+fn p(l: &[String]) -> Vec<String> {
     let mut output = Vec::<String>::new();
     for i in 0..l.len() {
         let mut line = l[i].clone();
@@ -482,13 +478,13 @@ fn p(l: &Vec<String>) -> Vec<String> {
         }
         output.push(line.to_string());
     }
-    return output;
+    output
 }
 
 /*
 adds blockquote elements
 */
-fn blockquote(l: &Vec<String>) -> Vec<String> {
+fn blockquote(l: &[String]) -> Vec<String> {
     let mut output = Vec::<String>::new();
     let mut i = 0;
     while i < l.len() {
@@ -510,7 +506,7 @@ fn blockquote(l: &Vec<String>) -> Vec<String> {
         i += 1;
     }
 
-    return output;
+    output
 }
 
 /*
@@ -520,7 +516,7 @@ if the "level" (whitespace) increases, it adds a new list element before adding 
 if the "level" decreases, it adds a close list element after adding the line
 once the list ends, it adds the necessary number of close list elements
 */
-fn list(l: &Vec<String>, point: &str) -> Vec<String> {
+fn list(l: &[String], point: &str) -> Vec<String> {
     let mut output = Vec::<String>::new();
 
     let mut start = String::from("");
@@ -548,30 +544,34 @@ fn list(l: &Vec<String>, point: &str) -> Vec<String> {
                 level = space;
                 output.push(String::from(&start));
             }
-            if space > level {
-                for _j in 0..space - level {
-                    output.push(String::from(&start));
+            match space.cmp(&level) {
+                Ordering::Greater => {
+                    for _j in 0..space - level {
+                        output.push(String::from(&start));
+                    }
+                    line = remove(&line, 0, first(&line).1);
+                    line.remove(0);
+                    line = remove(&line, 0, first(&line).1);
+                    line = insert(&line, 0, "<li>");
+                    line = insert(&line, len(&line), "</li>");
                 }
-                line = remove(&line, 0, first(&line).1);
-                line.remove(0);
-                line = remove(&line, 0, first(&line).1);
-                line = insert(&line, 0, "<li>");
-                line = insert(&line, len(&line), "</li>");
-            } else if space < level {
-                for _j in 0..level - space {
-                    output.push(String::from(&end));
+                Ordering::Less => {
+                    for _j in 0..level - space {
+                        output.push(String::from(&end));
+                    }
+                    line = remove(&line, 0, first(&line).1);
+                    line.remove(0);
+                    line = remove(&line, 0, first(&line).1);
+                    line = insert(&line, 0, "<li>");
+                    line = insert(&line, len(&line), "</li>");
                 }
-                line = remove(&line, 0, first(&line).1);
-                line.remove(0);
-                line = remove(&line, 0, first(&line).1);
-                line = insert(&line, 0, "<li>");
-                line = insert(&line, len(&line), "</li>");
-            } else {
-                line = remove(&line, 0, first(&line).1);
-                line.remove(0);
-                line = remove(&line, 0, first(&line).1);
-                line = insert(&line, 0, "<li>");
-                line = insert(&line, len(&line), "</li>");
+                _ => {
+                    line = remove(&line, 0, first(&line).1);
+                    line.remove(0);
+                    line = remove(&line, 0, first(&line).1);
+                    line = insert(&line, 0, "<li>");
+                    line = insert(&line, len(&line), "</li>");
+                }
             }
             level = space;
         } else if char != point && in_list {
@@ -595,7 +595,7 @@ fn list(l: &Vec<String>, point: &str) -> Vec<String> {
         i += 1;
     }
 
-    return output;
+    output
 }
 
 /*
@@ -644,7 +644,7 @@ fn img(s: &String) -> String {
         i += 1;
     }
     // line.push_str("");
-    return line;
+    line
 }
 
 /*
@@ -692,7 +692,7 @@ fn a(s: &String) -> String {
         }
         i += 1;
     }
-    return line;
+    line
 }
 
 /*
@@ -717,21 +717,16 @@ fn em(s: &String) -> String {
         return line;
     }
 
-    loop {
-        match line.find("*") {
-            Some(i) => {
-                if astrices % 2 == 0 {
-                    line.replace_range(i..i + 1, "<em>");
-                } else {
-                    line.replace_range(i..i + 1, "</em>");
-                }
-                astrices -= 1;
-            }
-            None => break,
+    while let Some(i) = line.find('*') {
+        if astrices % 2 == 0 {
+            line.replace_range(i..i + 1, "<em>");
+        } else {
+            line.replace_range(i..i + 1, "</em>");
         }
+        astrices -= 1;
     }
 
-    return line;
+    line
 }
 
 /*
@@ -769,7 +764,7 @@ fn h(s: &String) -> String {
         // line.insert_str(len(&line), "</p>");
     }
 
-    return line;
+    line
 }
 
 /*
@@ -797,7 +792,7 @@ fn trim(l: &String, start: usize, end: usize) -> String {
             i += 1;
         }
     }
-    return line;
+    line
 }
 
 /*
@@ -819,7 +814,7 @@ fn insert(s: &String, idx: usize, ins: &str) -> String {
             r.push_str(&slice(&s, a_ins..a_ins + 1));
         }
     }
-    return r;
+    r
 }
 
 /*
@@ -827,13 +822,10 @@ replaces all target str in String with insert str
 */
 fn replace(s: &String, target: &str, insert: &str) -> String {
     let mut source = s.clone();
-    loop {
-        match source.find(target) {
-            Some(i) => source.replace_range(i..i + len(&target.to_string()), insert),
-            None => break,
-        }
+    while let Some(i) = source.find(target) {
+        source.replace_range(i..i + len(&target.to_string()), insert);
     }
-    return source.to_string();
+    source
 }
 
 /*
@@ -845,7 +837,7 @@ fn remove(s: &String, idx: usize, l: usize) -> String {
     let first = slice(&s, 0..idx);
     let second = slice(&s, idx + l..len(&s));
 
-    return [first, second].concat();
+    [first, second].concat()
 }
 
 /*
@@ -859,10 +851,10 @@ fn first(s: &String) -> (String, usize) {
         if char == " " || char == "\t" {
             num += 1;
         } else {
-            return (char.to_string(), num);
+            return (char, num);
         }
     }
-    return (String::from(""), num);
+    (String::from(""), num)
 }
 
 /*
@@ -870,7 +862,7 @@ returns the length of a String, taking graphemes into account
 */
 fn len(s: &String) -> usize {
     let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
-    return graphemes.len();
+    graphemes.len()
 }
 
 /*
@@ -882,14 +874,14 @@ fn slice(s: &String, r: Range<usize>) -> String {
     for i in r {
         sub_graph.push(graphemes[i]);
     }
-    return sub_graph.join("");
+    sub_graph.join("")
 }
 
 /*
 returns a day, month, and year, from a given epoch number
 */
 fn calc_date(s: String) -> (String, String, String) {
-    let mut _seconds = s.clone().parse::<i32>().unwrap();
+    let mut _seconds = s.parse::<i32>().unwrap();
     let mut _minutes = _seconds / 60;
     _seconds -= _minutes * 60;
 
@@ -940,7 +932,7 @@ fn calc_date(s: String) -> (String, String, String) {
     }
     days += 1;
     month += 1;
-    return (days.to_string(), month.to_string(), year.to_string());
+    (days.to_string(), month.to_string(), year.to_string())
 }
 
 /*  ^(;,;)^   */
