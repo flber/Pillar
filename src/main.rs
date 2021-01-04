@@ -162,7 +162,7 @@ fn main() {
                                         if i < LATEST_LENGTH {
                                             posts_list.push_str("- ");
                                             posts_list.push_str(post.1.as_str());
-                                            posts_list.push_str(" [{");
+                                            posts_list.push_str(" [");
 
                                             let lines = file_to_lines(&post.0);
                                             let mut title = String::from("");
@@ -182,7 +182,7 @@ fn main() {
                                             } else {
                                                 posts_list.push_str(&title);
                                             }
-                                            posts_list.push_str("}](");
+                                            posts_list.push_str("](");
                                             let mut relative_path =
                                                 replace(&post.0, MARBLE_PATH, "");
                                             relative_path = replace(&relative_path, ".mr", ".html");
@@ -933,9 +933,36 @@ fn calc_date(s: String) -> (String, String, String) {
             break;
         }
     }
+
     days += 1;
     month += 1;
-    (days.to_string(), month.to_string(), year.to_string())
+
+    let mut f_days = String::new();
+    let mut f_month = String::new();
+    let mut f_year = String::new();
+
+    if days < 10 {
+        f_days = days.to_string();
+        f_days = insert(&f_days, 0, "0");
+    } else {
+        f_days = days.to_string();
+    }
+
+    if month < 10 {
+        f_month = month.to_string();
+        f_month = insert(&f_month, 0, "0");
+    } else {
+        f_month = month.to_string();
+    }
+
+    if year < 10 {
+        f_year = year.to_string();
+        f_year = insert(&f_year, 0, "0");
+    } else {
+        f_year = year.to_string();
+    }
+
+    (f_days, f_month, f_year)
 }
 
 /*  ^(;,;)^   */
