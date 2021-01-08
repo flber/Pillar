@@ -3,7 +3,6 @@ use std::cmp::Ordering;
 use std::env;
 use std::fs;
 use std::os::unix::fs::MetadataExt;
-use unicode_segmentation::UnicodeSegmentation;
 
 const HELP_MENU: &str = "Builds static site from marble files \n\
 						 \n\
@@ -864,20 +863,28 @@ fn first(s: &String) -> (String, usize) {
 returns the length of a String, taking graphemes into account
 */
 fn len(s: &String) -> usize {
-    let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
-    graphemes.len()
+    // let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
+    // graphemes.len()
+    s.chars().count()
 }
 
 /*
 returns a slice of a string from a range, utf-8 compliant
 */
 fn slice(s: &String, r: Range<usize>) -> String {
-    let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
-    let mut sub_graph = Vec::<&str>::new();
-    for i in r {
-        sub_graph.push(graphemes[i]);
+    // let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
+    // let mut sub_graph = Vec::<&str>::new();
+    // for i in r {
+        // sub_graph.push(graphemes[i]);
+    // }
+    // sub_graph.join("")
+    let mut sub_string = Vec::<String>::new();
+    for (i, c) in s.chars().enumerate() {
+    	if r.contains(&i) {
+    		sub_string.push(c.to_string());
+    	}
     }
-    sub_graph.join("")
+    sub_string.join("")
 }
 
 /*
@@ -937,9 +944,9 @@ fn calc_date(s: String) -> (String, String, String) {
     days += 1;
     month += 1;
 
-    let mut f_days = String::new();
-    let mut f_month = String::new();
-    let mut f_year = String::new();
+    let mut f_days: String;
+    let mut f_month: String;
+    let mut f_year: String;
 
     if days < 10 {
         f_days = days.to_string();
