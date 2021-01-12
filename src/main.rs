@@ -418,6 +418,7 @@ fn parse_marble(lines: Vec<String>, whitespace: &str) -> Vec<String> {
         if len(&output[i]) > 0 {
             output[i] = h(&output[i]);
             output[i] = em(&output[i]);
+            output[i] = b(&output[i]);
             output[i] = img(&output[i]);
             output[i] = a(&output[i]);
         } else {
@@ -723,6 +724,36 @@ fn em(s: &String) -> String {
             line.replace_range(i..i + 1, "<em>");
         } else {
             line.replace_range(i..i + 1, "</em>");
+        }
+        astrices -= 1;
+    }
+
+    line
+}
+
+fn b(s: &String) -> String {
+    let mut line = s.clone();
+    let mut astrices = 0;
+
+    for i in 0..len(&line) {
+        let char = slice(&line, i..i + 1);
+        if char == "_" {
+            astrices += 1;
+        }
+    }
+
+    if astrices % 2 == 1 {
+        astrices -= 1;
+    }
+    if astrices < 2 {
+        return line;
+    }
+
+    while let Some(i) = line.find('_') {
+        if astrices % 2 == 0 {
+            line.replace_range(i..i + 1, "<b>");
+        } else {
+            line.replace_range(i..i + 1, "</b>");
         }
         astrices -= 1;
     }
