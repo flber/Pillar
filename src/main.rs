@@ -737,7 +737,7 @@ fn b(s: &String) -> String {
 
     for i in 0..len(&line) {
         let char = slice(&line, i..i + 1);
-        if char == "_" {
+        if char == "^" {
             astrices += 1;
         }
     }
@@ -749,7 +749,7 @@ fn b(s: &String) -> String {
         return line;
     }
 
-    while let Some(i) = line.find('_') {
+    while let Some(i) = line.find('^') {
         if astrices % 2 == 0 {
             line.replace_range(i..i + 1, "<b>");
         } else {
