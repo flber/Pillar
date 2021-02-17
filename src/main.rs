@@ -74,7 +74,9 @@ fn main() -> std::io::Result<()> {
 	                    String::from("html"),
 	                ].concat();
 	                println!("+ {}", target);
-	                match fs::write(&target, templated(&config, &page)) {
+	                let templated_string = templated(&config, &page);
+	                let completed = replace(&templated_string, "{{date}}", &short_date);
+	                match fs::write(&target, completed) {
 	                    Ok(_) => (),
 	                    Err(e) => println!("failed to write to {}: {}", &target, e),
 	                };

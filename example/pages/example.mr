@@ -6,6 +6,18 @@ title: Example Page
 
 # これはテストです
 
+[ h1 | This is a header ]
+
+[ ul
+	| item 1
+	| item 2
+	| [ul 
+		| an indented item
+	]
+]
+
+[ a, href: link.com | this is a link ]
+
 
 ##これはh2です
 #これは別のh1です
@@ -30,7 +42,7 @@ title: Example Page
 		-別の
 			- さらに！ ?? !!
 -通常に戻る
-		-一度に2つアップしますか？ !! ?? !! ?? !! ?? !!
+		-度に2つアップしますか？ !! ?? !! ?? !! ?? !!
 
 ~これは注文リストです
 ~別のアイテム
@@ -66,3 +78,5 @@ this = ["this is"、＆this] .concat（）;
 
 ここにいくつかのUnicodeがあります：高速同期超長
 {{latest}}
+
+{{date}}
