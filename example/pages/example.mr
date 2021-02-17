@@ -2,67 +2,67 @@
 title: Example Page
 !meta!
 
-## hi
+## こんにちは
 
-# This is a test
+# これはテストです
 
 
-## This is h2
-#This is another h1
-    ### This h3 is indented
+##これはh2です
+#これは別のh1です
+    ###このh3はインデントされています
 
-*what happens? (Hopefully nothing)
+*何が起こるのですか？ （うまくいけば何も）
 
-*Test, test*. A fast brown fox jumps over a lazy dog. A fast brown fox jumps over a lazy dog. A fast brown fox jumps over a lazy dog. A fast brown fox jumps over a lazy dog. *#static*
+*テスト、テスト*。速い茶色のキツネが怠惰な犬を飛び越えます。速い茶色のキツネが怠惰な犬を飛び越えます。速い茶色のキツネが怠惰な犬を飛び越えます。速い茶色のキツネが怠惰な犬を飛び越えます。 *＃静的*
 
-	[{indented link}](link.com)
+[{インデントされたリンク}](link.com)
 
-[Links with [character] in {[it (}](link.com)
+[{[it（}](link.com)の[文字]とのリンク
 
-More tests (this is just a normal line).
+より多くのテスト（これは単なる通常の行です）。
 
 ## h2
-## Another h2
+##別のh2
 
-- List item 1
-- List item 2
-	- Wow, sublist!
-		- another
-			- further! ?? !!
-- Return to normal
-		- Up two at a time? !! ?? !! ?? !! ?? !!
+-リストアイテム1
+-リストアイテム2
+	-うわー、サブリスト！
+		-別の
+			- さらに！ ?? !!
+-通常に戻る
+		-一度に2つアップしますか？ !! ?? !! ?? !! ?? !!
 
-~ This is an ordered list
-~ Another item
-	~ Indent
-	~ Still indented
+~これは注文リストです
+~別のアイテム
+~インデント
+~まだインデントされています
 
-	- Indented list to start
-	- Still indented
-		- More indent
+-開始するインデントされたリスト
+-まだインデントされています
+-より多くのインデント
 
-![Selfie](selfie.gif)
+![自分撮り](selfie.gif)
 
-> This is a block quote
+>これはブロック引用です
 
-    > This is another, but there is a strange whitespace
+    >これは別ですが、奇妙な空白があります
 
-[{Click here for a link to another page}](other_page.html)
+[{別のページへのリンクはここをクリック}](other_page.html)
 
 
 ### a h3
 
-{{music}}
+{{音楽}}
 
 
-> This is a simple block quote, not very elaborate here
+>これは単純なブロック引用であり、ここではあまり詳し
+	>ありません
 
 !code!
-mut this = "actual code block";
-this = ["this is", & this].concat ();
-	// Here are some indents
+mut this = "実際のコードブロック";
+this = ["this is"、＆this] .concat（）;
+//ここにいくつかのインデントがあります
 !code!
 
-Here are some unicodes: fast sync super long
-
+ここにいくつかのUnicodeがあります：高速同期超長
 {{latest}}
