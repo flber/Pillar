@@ -1,5 +1,5 @@
 # Pillar
-A simple site generator with template support, written in plain Rust with no external dependencies.
+A simple site generator with template support, written in plain (and now slightly more idiomatic) Rust.
 
 ## Now with unicode support!
 
