@@ -1,0 +1,8 @@
+[paths]
+template_path = "templates/"
+marble_path = "pages/"
+html_path = "docs/"
+music_path = "/home/benh/Music/"
+
+[values]
+latest_length = 15
