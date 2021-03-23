@@ -72,9 +72,9 @@ pub mod marble {
                 } else if in_reserved {
                     if let Some(c_index) = line.find(':') {
                         let mut name = slice(&line, 0..c_index);
-                        name = trim(&name, 0, 0);
+                        name = trim(&name, 0, 0).0;
                         let mut value = slice(&line, c_index + 1..len(&line));
-                        value = trim(&value, 0, 0);
+                        value = trim(&value, 0, 0).0;
                         meta.push(Metadata { name, value });
                     }
                 } else {
@@ -92,6 +92,22 @@ pub mod marble {
         }
     }
 
+// Preprocessing layer
+/*
+[ ul 
+	| stuff 1
+	| stuff 1
+]
+*/
+
+// Parsing layer
+/*
+[ ul 
+	| [ li | stuff 1 ]
+	| [ li | stuff 1 ]
+]
+*/
+
     /*
     starts by pulling out lines in `!code!` blocks
     replaces `!code!` markers with respective html elements
@@ -104,10 +120,72 @@ pub mod marble {
     */
     pub fn parse_marble(s: &String) -> Page {
         let meta = parse_header(&s).meta;
-        let content = &parse_header(&s).content;
-        let mut output = Vec::<String>::new();
-    
-		let split_content = content.lines();
+        let mut text = parse_header(&s).content;
+
+        let mut content = String::new();
+
+		let mut elements = Vec::<String>::new();
+		let mut is_in_elements = false;
+		let mut first_elem = true;
+		let mut in_quotes = false;
+		let mut attr_start: usize = 0;
+		let mut attr_end: usize = 0;
+		
+        for i in 0..len(&text) {
+            let char = &slice(&text, i..i + 1)[..];
+            if char == "\"" && !in_quotes {
+            	in_quotes = true;
+            } else if char == "\"" && in_quotes {
+            	if &slice(&text, i - 1..i)[..] != "\\" {
+            		in_quotes = false;
+            	}
+            }
+            if !in_quotes {
+	            match char {
+	            	"[" => {
+	            		first_elem = true;
+	            		attr_start = first_from(&text, i+1).1;
+	            		println!("first: {}, {}", first_from(&text, i+1).0, attr_start);
+	            		is_in_elements = true;
+	            		content.push_str("<");
+	            		text = remove(&text, i+1, first_from(&text, i+1).1);
+	            	},
+	            	"," => {
+	            		attr_end = trim(&text, attr_start, i-1).2;
+	            		println!("{}, {}", attr_start, attr_end);
+	            		first_elem = false
+	            	},
+	            	":" => {
+	            		content.push_str("=");
+	            		text = remove(&text, i+1, first_from(&text, i+1).1);
+	            	}
+	            	"|" => {
+	            		is_in_elements = false;
+	            		content.push_str(">");
+	            		first_elem = false
+	            	},
+	            	"]" => {
+	            		content.push_str("</");
+	            		// match elements.pop() {
+	            			// Some(s) => {
+	            				// content.push_str(&s);
+	            			// },
+	            			// None => (),
+	            		// }
+	            		content.push_str(">");
+	            	},
+	            	_ => {
+	            		content.push_str(char);
+	            	},
+	            }
+            } else {
+	           	content.push_str(char);
+            }
+        }
+        println!("{}", content);
+
+/*
+		let split_content = text.lines();
 		let str_lines: Vec<&str> = split_content.collect();
 		let mut lines = Vec::<String>::new();
 
@@ -116,6 +194,8 @@ pub mod marble {
 		    line.push_str(str_line);
 		    lines.push(line);
 		}
+
+		let mut output = Vec::<String>::new();
     
         // sets lines which shouldn't be parsed (code and page variables)
         let mut reserved = Vec::<String>::new();
@@ -182,7 +262,7 @@ pub mod marble {
         for row in output {
         	content.push_str(row.as_str());
         }
-
+*/
         Page {
             meta,
             content,
@@ -509,7 +589,7 @@ pub mod marble {
     */
     fn h(s: &String) -> String {
         let mut line = s.clone();
-        line = trim(&line, 0, len(&line));
+        line = trim(&line, 0, len(&line)).0;
         let mut is_header = false;
 
         let f = first(&s).1;
@@ -550,14 +630,17 @@ pub mod text {
     /*
     removes whitespace around given string from start and end indices
     */
-    pub fn trim(l: &String, start: usize, end: usize) -> String {
+    pub fn trim(l: &String, start: usize, end: usize) -> (String, usize, usize) {
         let mut line = l.clone();
+        let mut first: usize = 0;
+        let mut last: usize = 0;
         let mut hit_text = false;
         for i in (0..len(&line) - end).rev() {
             let next = slice(&line, i..i + 1);
             if !hit_text && (next == " " || next == "\t") {
                 line = remove(&line, i, 1);
             } else {
+            	first = i;
                 hit_text = true;
             }
         }
@@ -569,10 +652,11 @@ pub mod text {
                 line = remove(&line, i, 1);
             } else {
                 hit_text = true;
+                last = i;
                 i += 1;
             }
         }
-        line
+        (line, first, last)
     }
 
     /*
@@ -635,6 +719,14 @@ pub mod text {
             }
         }
         (String::from(""), num)
+    }
+    
+    /*
+    returns the first character in a string from an index, as well as the index of that string
+    */
+    pub fn first_from(s: &String, i: usize) -> (String, usize) {
+        let line = s.clone();
+        first(&slice(&line, i..len(&line)))
     }
 
     /*
