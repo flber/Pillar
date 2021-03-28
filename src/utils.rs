@@ -125,11 +125,7 @@ pub mod marble {
         let mut content = String::new();
 
 		let mut elements = Vec::<String>::new();
-		let mut is_in_elements = false;
-		let mut first_elem = true;
 		let mut in_quotes = false;
-		let mut attr_start: usize = 0;
-		let mut attr_end: usize = 0;
 		
         for i in 0..len(&text) {
             let char = &slice(&text, i..i + 1)[..];
@@ -143,36 +139,20 @@ pub mod marble {
             if !in_quotes {
 	            match char {
 	            	"[" => {
-	            		first_elem = true;
-	            		attr_start = first_from(&text, i+1).1;
-	            		println!("first: {}, {}", first_from(&text, i+1).0, attr_start);
-	            		is_in_elements = true;
 	            		content.push_str("<");
 	            		text = remove(&text, i+1, first_from(&text, i+1).1);
 	            	},
 	            	"," => {
-	            		attr_end = trim(&text, attr_start, i-1).2;
-	            		println!("{}, {}", attr_start, attr_end);
-	            		first_elem = false
 	            	},
 	            	":" => {
-	            		content.push_str("=");
-	            		text = remove(&text, i+1, first_from(&text, i+1).1);
 	            	}
 	            	"|" => {
-	            		is_in_elements = false;
+	            		// println!("last char: {}", last_from(&text, i-1).0);
+	            		content = remove(&content, i, last_from(&content, i).1);
 	            		content.push_str(">");
-	            		first_elem = false
 	            	},
 	            	"]" => {
-	            		content.push_str("</");
-	            		// match elements.pop() {
-	            			// Some(s) => {
-	            				// content.push_str(&s);
-	            			// },
-	            			// None => (),
-	            		// }
-	            		content.push_str(">");
+	            		content.push_str("</>");
 	            	},
 	            	_ => {
 	            		content.push_str(char);
@@ -722,13 +702,30 @@ pub mod text {
     }
     
     /*
-    returns the first character in a string from an index, as well as the index of that string
+    returns the first character in a string from an index, as well as the index of that character
     */
     pub fn first_from(s: &String, i: usize) -> (String, usize) {
         let line = s.clone();
         first(&slice(&line, i..len(&line)))
     }
 
+	/*
+	returns the last character in a string from an index, as well as the index of that character
+	*/
+    pub fn last_from(s: &String, i: usize) -> (String, usize) {
+        for i in (0..i).rev() {
+    		let char = &slice(&s, i..i+1) as &str;
+    		match char {
+    			" " => (),
+    			"\t" => (),
+    			_ => {
+    				return (String::from(char), i);
+    			},
+    		}
+        }
+        (String::from(""), i)
+    }
+    
     /*
     returns the length of a String, taking graphemes into account
     */
