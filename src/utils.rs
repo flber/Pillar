@@ -429,7 +429,7 @@ pub mod marble {
                     // inserts start of html
                     line = insert(&line, i_bracket, "<a href=\"");
                     // closes initial link html
-                    line = insert(&line, i_bracket + 9, "\">");
+                    line = insert(&line, i_bracket + 9, "\" loading=\"lazy\">");
                     // adds link to html
                     line = insert(&line, i_bracket + 9, &link);
                 }
