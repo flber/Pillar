@@ -371,7 +371,7 @@ pub mod marble {
                 let temp_line = line.clone();
                 let link = slice(&temp_line, i_paren + 1..i);
                 // adds the close img
-                line = insert(&line, i + 1, "\"/>");
+                line = insert(&line, i + 1, "\" loading=\"lazy\">");
                 // removes the closing bracket and link portion
                 line = remove(&line, i_paren - 1, i - i_paren + 2);
                 // removes opening bracket and !
@@ -429,7 +429,7 @@ pub mod marble {
                     // inserts start of html
                     line = insert(&line, i_bracket, "<a href=\"");
                     // closes initial link html
-                    line = insert(&line, i_bracket + 9, "\" loading=\"lazy\">");
+                    line = insert(&line, i_bracket + 9, "\">");
                     // adds link to html
                     line = insert(&line, i_bracket + 9, &link);
                 }
