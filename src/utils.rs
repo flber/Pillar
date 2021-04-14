@@ -1,6 +1,59 @@
+pub mod progress {
+
+	use std::io::{self, Write};
+
+	pub struct Bar {
+		pub left_pad: usize,
+		pub bar_width: usize,
+		pub max: usize,
+	}
+	
+	impl Bar {
+		pub fn print(&self, i: usize) {
+			let inverse = 1.0 / (i as f32 / self.max as f32);
+			let progress = (self.bar_width as f32 / inverse) as usize;
+		
+			print!("\r{:#left$}{} [{:=>mid$}{:->right$}", 
+				(100.0/inverse).ceil(),
+				" ", ">", "]", 
+				left = self.left_pad, 
+				mid = progress, 
+				right = self.bar_width - progress
+			);
+			io::stdout().flush().unwrap();
+		}
+	}
+	
+	pub fn terminal_size() -> Option<(u16, u16)> {
+	    use std::process::Command;
+	    use std::process::Stdio;
+	
+	    let output = Command::new("stty")
+		    .arg("size")
+		    .arg("-F")
+		    .arg("/dev/stderr")
+		    .stderr(Stdio::inherit())
+		    .output()
+		    .unwrap();
+		
+	    let stdout = String::from_utf8(output.stdout).unwrap();
+	    if !output.status.success() {
+	    	return None;
+	    }
+	    
+	    // stdout is "rows cols"
+	    let mut data = stdout.split_whitespace();
+	    let rows = u16::from_str_radix(data.next().unwrap(), 10).unwrap();
+	    let cols = u16::from_str_radix(data.next().unwrap(), 10).unwrap();
+	    Some((rows, cols))
+	}
+	
+}
+
 pub mod marble {
 
     use crate::utils::text::*;
+    use crate::utils::progress::*;
     use std::cmp::Ordering;
 	use std::fmt;
 	use std::str::FromStr;
@@ -29,8 +82,20 @@ pub mod marble {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let raw = s.to_string();
-            Ok(parse_marble(&raw))
-        }
+            
+            let width = match terminal_size() {
+                    Some(s) => s,
+                    None => (100, 100),
+            }.1 as usize;
+            let left_pad = width / 10;
+            let bar_width = width / 2;
+                        
+            Ok(parse_marble(&raw, Bar { 
+                left_pad, 
+                bar_width, 
+                max: len(&raw), 
+            }))
+		}
     }
 
     impl fmt::Display for Page {
@@ -102,7 +167,7 @@ pub mod marble {
     adds back reserved lines
     returns parsed lines
     */
-    pub fn parse_marble(s: &String) -> Page {
+    pub fn parse_marble(s: &String, bar: Bar) -> Page {
         let meta = parse_header(&s).meta;
         let content = &parse_header(&s).content;
         let mut output = Vec::<String>::new();
@@ -138,8 +203,14 @@ pub mod marble {
             output.push(line);
         }
 
+		let mut total = 0;
         // single line formatting goes in here
         for i in 0..output.len() {
+        	for j in 0..i {
+        		total += len(&output[j]);
+        	}
+        	if total < bar.max { bar.print(total); }
+        	if i == output.len() - 1 { bar.print(bar.max); }
             if len(&output[i]) > 0 {
                 output[i] = h(&output[i]);
                 // println!("h");

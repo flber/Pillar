@@ -60,11 +60,7 @@ fn main() -> std::io::Result<()> {
                             replace_latest(&contents, &config.marble_path, config.latest_length);
                     }
 
-	                // replaces content and date markers
-	                contents = replace(&contents, "{{date}}", &short_date);
-					let page = contents.parse::<Page>().unwrap();
-
-
+					// formats target string
 	                let target = [
 	                    config.html_path.clone(),
 	                    slice(
@@ -74,6 +70,13 @@ fn main() -> std::io::Result<()> {
 	                    String::from("html"),
 	                ].concat();
 	                println!("+ {}", target);
+
+	                // replaces content and date markers
+	                contents = replace(&contents, "{{date}}", &short_date);
+					let page = contents.parse::<Page>().unwrap();
+					// make progress bars on different lines
+					println!();
+	                
 	                let templated_string = templated(&config, &page);
 	                let completed = replace(&templated_string, "{{date}}", &short_date);
 	                match fs::write(&target, completed) {
