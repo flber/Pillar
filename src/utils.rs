@@ -206,11 +206,13 @@ pub mod marble {
 		let mut total = 0;
         // single line formatting goes in here
         for i in 0..output.len() {
+        
         	for j in 0..i {
         		total += len(&output[j]);
         	}
         	if total < bar.max { bar.print(total); }
         	if i == output.len() - 1 { bar.print(bar.max); }
+        	
             if len(&output[i]) > 0 {
                 output[i] = h(&output[i]);
                 // println!("h");
