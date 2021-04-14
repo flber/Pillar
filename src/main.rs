@@ -18,7 +18,7 @@ const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 fn get_banner() -> std::string::String {
     format!(
         "{} Version {}
-Convert marble to html\n",
+		Convert marble to html\n",
         AUTHORS, VERSION,
     )
 }
@@ -60,10 +60,7 @@ fn main() -> std::io::Result<()> {
                             replace_latest(&contents, &config.marble_path, config.latest_length);
                     }
 
-                    // replaces content and date markers
-                    contents = replace(&contents, "{{date}}", &short_date);
-                    let page = contents.parse::<Page>().unwrap();
-
+					// generates target string
                     let target = [
                         config.html_path.clone(),
                         slice(
@@ -73,9 +70,17 @@ fn main() -> std::io::Result<()> {
                         String::from("html"),
                     ]
                     .concat();
+                    
                     println!("+ {}", target);
+
+                    // replaces content and date markers
+                    contents = replace(&contents, "{{date}}", &short_date, true);
+                    let page = contents.parse::<Page>().unwrap();
+                    // this just adds a newline so the progress bars are on separate lines
+                    println!();
+                    
                     let templated_string = templated(&config, &page);
-                    let completed = replace(&templated_string, "{{date}}", &short_date);
+                    let completed = replace(&templated_string, "{{date}}", &short_date, true);
                     match fs::write(&target, completed) {
                         Ok(_) => (),
                         Err(e) => println!("failed to write to {}: {}", &target, e),
@@ -171,9 +176,9 @@ fn replace_music(contents: &String, path: &str) -> String {
         }
         Err(e) => println!("Failed to open {} with error {}", path, e),
     }
-    music = replace(&music, path, "");
-    music = replace(&music, "\"", "");
-    replace(&contents, "{{music}}", &music)
+    music = replace(&music, path, "", true);
+    music = replace(&music, "\"", "", true);
+    replace(&contents, "{{music}}", &music, true)
 }
 
 fn replace_latest(contents: &String, path: &str, l: usize) -> String {
@@ -230,15 +235,15 @@ fn replace_latest(contents: &String, path: &str, l: usize) -> String {
             }
 
             if title.is_empty() {
-                let mut title = replace(&post.0, path, "");
-                title = replace(&title, ".mr", "");
+                let mut title = replace(&post.0, path, "", true);
+                title = replace(&title, ".mr", "", true);
                 posts_list.push_str(&title);
             } else {
                 posts_list.push_str(&title);
             }
             posts_list.push_str("](");
-            let mut relative_path = replace(&post.0, path, "");
-            relative_path = replace(&relative_path, ".mr", ".html");
+            let mut relative_path = replace(&post.0, path, "", true);
+            relative_path = replace(&relative_path, ".mr", ".html", true);
             posts_list.push_str(&relative_path);
             posts_list.push(')');
             posts_list.push('\n');
@@ -247,7 +252,7 @@ fn replace_latest(contents: &String, path: &str, l: usize) -> String {
         }
     }
     // this is in the format of `- DDMMYY [{Title}](path)` where the path is modified to be an html file in the html dir
-    replace(&contents, "{{latest}}", &posts_list)
+    replace(&contents, "{{latest}}", &posts_list, true)
 }
 
 fn templated(config: &Config, page: &Page) -> String {
@@ -287,5 +292,5 @@ fn templated(config: &Config, page: &Page) -> String {
     // replaces content in template
     let mut con_w_space = String::from("{{content}}");
     con_w_space = insert(&con_w_space, 0, &whitespace);
-    replace(&template_contents, &con_w_space, &page.content)
+    replace(&template_contents, &con_w_space, &page.content, true)
 }

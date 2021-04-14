@@ -1,7 +1,60 @@
+pub mod progress {
+
+	use std::io::{self, Write};
+
+	pub struct Bar {
+		pub left_pad: usize,
+		pub bar_width: usize,
+		pub max: usize,
+	}
+	
+	impl Bar {
+		pub fn print(&self, i: usize) {
+			let inverse = 1.0 / (i as f32 / self.max as f32);
+			let progress = (self.bar_width as f32 / inverse) as usize;
+		
+			print!("\r{:#left$}{} [{:=>mid$}{:->right$}", 
+				(100.0/inverse).ceil(),
+				" ", ">", "]", 
+				left = self.left_pad, 
+				mid = progress, 
+				right = self.bar_width - progress
+			);
+			io::stdout().flush().unwrap();
+		}
+	}
+	
+	pub fn terminal_size() -> Option<(u16, u16)> {
+	    use std::process::Command;
+	    use std::process::Stdio;
+	
+	    let output = Command::new("stty")
+		    .arg("size")
+		    .arg("-F")
+		    .arg("/dev/stderr")
+		    .stderr(Stdio::inherit())
+		    .output()
+		    .unwrap();
+		
+	    let stdout = String::from_utf8(output.stdout).unwrap();
+	    if !output.status.success() {
+	    	return None;
+	    }
+	    
+	    // stdout is "rows cols"
+	    let mut data = stdout.split_whitespace();
+	    let rows = u16::from_str_radix(data.next().unwrap(), 10).unwrap();
+	    let cols = u16::from_str_radix(data.next().unwrap(), 10).unwrap();
+	    Some((rows, cols))
+	}
+	
+}
+
 pub mod marble {
 
     use crate::utils::text::*;
-    use std::cmp::Ordering;
+    use crate::utils::progress::*;
+    // use std::cmp::Ordering;
 	use std::fmt;
 	use std::str::FromStr;
 
@@ -29,7 +82,19 @@ pub mod marble {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let raw = s.to_string();
-            Ok(parse_marble(&raw))
+            
+			let width = match terminal_size() {
+				Some(s) => s,
+				None => (100, 100),
+			}.1 as usize;
+			let left_pad = width / 10;
+			let bar_width = width / 2;
+			
+            Ok(parse_marble(&raw, Bar { 
+            	left_pad, 
+            	bar_width, 
+            	max: len(&raw), 
+            }))
         }
     }
 
@@ -92,21 +157,21 @@ pub mod marble {
         }
     }
 
-// Preprocessing layer
-/*
-[ ul 
-	| stuff 1
-	| stuff 1
-]
-*/
+	// Preprocessing layer
+	/*
+	[ ul 
+		stuff 1
+		stuff 1
+	]
+	*/
 
-// Parsing layer
-/*
-[ ul 
-	| [ li | stuff 1 ]
-	| [ li | stuff 1 ]
-]
-*/
+	// Parsing layer
+	/*
+	[ ul |
+		[ li | stuff 1 ]
+		[ li | stuff 1 ]
+	]
+	*/
 
     /*
     starts by pulling out lines in `!code!` blocks
@@ -118,488 +183,112 @@ pub mod marble {
     adds back reserved lines
     returns parsed lines
     */
-    pub fn parse_marble(s: &String) -> Page {
+    pub fn parse_marble(s: &String, b: Bar) -> Page {
         let meta = parse_header(&s).meta;
-        let mut text = parse_header(&s).content;
+        let text = parse_header(&s).content;
 
-        let mut content = String::new();
+		let post_process = pre_process(&text);
+		let content: String = parse(&post_process, 0, Vec::<String>::new(), false, b);
 
-		let mut elements = Vec::<String>::new();
-		let mut in_quotes = false;
-		
-        for i in 0..len(&text) {
-            let char = &slice(&text, i..i + 1)[..];
-            if char == "\"" && !in_quotes {
-            	in_quotes = true;
-            } else if char == "\"" && in_quotes {
-            	if &slice(&text, i - 1..i)[..] != "\\" {
-            		in_quotes = false;
-            	}
-            }
-            if !in_quotes {
-	            match char {
-	            	"[" => {
-	            		content.push_str("<");
-	            		text = remove(&text, i+1, first_from(&text, i+1).1);
-	            	},
-	            	"," => {
-	            	},
-	            	":" => {
-	            	}
-	            	"|" => {
-	            		// println!("last char: {}", last_from(&text, i-1).0);
-	            		content = remove(&content, i, last_from(&content, i).1);
-	            		content.push_str(">");
-	            	},
-	            	"]" => {
-	            		content.push_str("</>");
-	            	},
-	            	_ => {
-	            		content.push_str(char);
-	            	},
-	            }
-            } else {
-	           	content.push_str(char);
-            }
-        }
-        println!("{}", content);
-
-/*
-		let split_content = text.lines();
-		let str_lines: Vec<&str> = split_content.collect();
-		let mut lines = Vec::<String>::new();
-
-		for str_line in str_lines {
-		    let mut line = String::new();
-		    line.push_str(str_line);
-		    lines.push(line);
-		}
-
-		let mut output = Vec::<String>::new();
-    
-        // sets lines which shouldn't be parsed (code and page variables)
-        let mut reserved = Vec::<String>::new();
-        let mut in_reserved = false;
-        for i in 0..lines.len() {
-            let mut line = lines[i].clone();
-            let first = first(&line).1;
-            if len(&line) >= first + 6 {
-                if slice(&line, first..first + 6) == "!code!" && !in_reserved {
-                    in_reserved = true;
-                    line = String::from("<pre>");
-                } else if slice(&line, first..first + 6) == "!code!" && in_reserved {
-                    line = String::from("</pre>");
-                    in_reserved = false;
-                } else if in_reserved {
-                    reserved.push(line);
-                    line = String::from("!reserved!");
-                }
-            }
-            output.push(line);
-        }
-
-        // single line formatting goes in here
-        for i in 0..output.len() {
-            if len(&output[i]) > 0 {
-                output[i] = h(&output[i]);
-                // println!("h");
-                output[i] = em(&output[i]);
-                // println!("em");
-                output[i] = b(&output[i]);
-                // println!("b");
-                output[i] = img(&output[i]);
-                // println!("img");
-                output[i] = a(&output[i]);
-                // println!("a\n");
-            } else {
-                // output[i] = String::from("<br>");
-            }
-        }
-        
-        // multi-line formatting goes out here
-        output = list(&output, "-");
-        output = list(&output, "~");
-        output = blockquote(&output);
-
-        output = p(&output);
-
-        output = nl(&output);
-        
-
-        // adds back lines which were reserved
-        let mut reserved_index = 0;
-        for i in 0..output.len() {
-            if output[i].contains("!reserved!") {
-                output[i] = reserved[reserved_index].clone();
-                if i != output.len() - 1 {
-                    output[i].push('\n');
-                }
-                reserved_index += 1;
-            }
-        }
-
-        let mut content = String::new();
-        for row in output {
-        	content.push_str(row.as_str());
-        }
-*/
         Page {
             meta,
             content,
         }
     }
 
-    /*
-    adds given whitespace to start of each line
-    adds a \n to the end of each line
-    */
-    fn nl(l: &[String]) -> Vec<String> {
-        let mut output = Vec::<String>::new();
-        for i in 0..l.len() {
-            let mut line = l[i].clone();
-            if i != l.len() - 1 {
-                line.push('\n');
-            }
-            output.push(line.to_string());
-        }
-        output
+    fn pre_process(s: &String) -> String {
+    	let mut t = s.clone();
+
+		for i in 0..len(&t) {
+			let char = &slice(&t, i..i+1);
+			// if char == "e" {
+				// t = remove(&t, i, 1);
+				// t = insert(&t, i, "▒");
+			// }
+		}
+    	
+    	t
     }
 
-    /*
-    if the line doesn't have any special formatting adds paragraph elements
-    */
-    fn p(l: &[String]) -> Vec<String> {
-        let mut output = Vec::<String>::new();
-        for i in 0..l.len() {
-            let mut line = l[i].clone();
-            let i_first = first(&line).1;
-            if len(&line) >= i_first + 4 {
-                let four = slice(&line, i_first..i_first + 4);
-                if four == "<em>" || four == "<a h" || four == "<img" || first(&line).0 != "<" {
-                    line.insert_str(0, "<p>");
-                    line.push_str("</p>");
-                }
-            }
-            output.push(line.to_string());
-        }
-        output
-    }
+    fn parse(s: &String, i: usize, mut elems: Vec<String>, mut in_quotes: bool, b: Bar) -> String {
+		b.print(i);
+    	let mut t = s.clone();
+    	if i == len(&t) {
+    		t
+    	} else {
+    		let char = &slice(&t, i..i+1)[..];
+    		
+    		if char == "\"" {
+  				if in_quotes {
+  					in_quotes = false; 
+  				} else if !in_quotes {
+  					in_quotes = true;
+  				}
+  			}
 
-    /*
-    adds blockquote elements
-    */
-    fn blockquote(l: &[String]) -> Vec<String> {
-        let mut output = Vec::<String>::new();
-        let mut i = 0;
-        while i < l.len() {
-            let mut line = l[i].clone();
-            let char = first(&line).0;
-
-            let mut is_blockquote = false;
-            if char == ">" {
-                output.push(String::from("<blockquote>"));
-                line = remove(&line, first(&line).1, 1);
-                line = remove(&line, 0, first(&line).1);
-                is_blockquote = true;
-            }
-
-            output.push(line.to_string());
-            if is_blockquote {
-                output.push(String::from("</blockquote>"));
-            }
-            i += 1;
-        }
-
-        output
-    }
-
-    /*
-    decides which type of list it should be making based on the given type
-    figures out when list starts and adds appropriate element
-    if the "level" (whitespace) increases, it adds a new list element before adding the line
-    if the "level" decreases, it adds a close list element after adding the line
-    once the list ends, it adds the necessary number of close list elements
-    */
-    fn list(l: &[String], point: &str) -> Vec<String> {
-        let mut output = Vec::<String>::new();
-
-        let mut start = String::from("");
-        let mut end = String::from("");
-        if point == "-" {
-            start = String::from("<ul>");
-            end = String::from("</ul>");
-        } else if point == "~" {
-            start = String::from("<ol>");
-            end = String::from("</ol>");
-        }
-
-        let mut in_list = false;
-        let mut level = 0;
-
-        let mut i = 0;
-        while i < l.len() {
-            let mut line = l[i].clone();
-            let char = first(&line).0;
-            let space = first(&line).1;
-
-            if char == point {
-                if !in_list {
-                    in_list = true;
-                    level = space;
-                    output.push(String::from(&start));
-                }
-                match space.cmp(&level) {
-                    Ordering::Greater => {
-                        for _j in 0..space - level {
-                            output.push(String::from(&start));
-                        }
-                        line = remove(&line, 0, first(&line).1);
-                        line.remove(0);
-                        line = remove(&line, 0, first(&line).1);
-                        line = insert(&line, 0, "<li>");
-                        line = insert(&line, len(&line), "</li>");
-                    }
-                    Ordering::Less => {
-                        for _j in 0..level - space {
-                            output.push(String::from(&end));
-                        }
-                        line = remove(&line, 0, first(&line).1);
-                        line.remove(0);
-                        line = remove(&line, 0, first(&line).1);
-                        line = insert(&line, 0, "<li>");
-                        line = insert(&line, len(&line), "</li>");
-                    }
-                    _ => {
-                        line = remove(&line, 0, first(&line).1);
-                        line.remove(0);
-                        line = remove(&line, 0, first(&line).1);
-                        line = insert(&line, 0, "<li>");
-                        line = insert(&line, len(&line), "</li>");
-                    }
-                }
-                level = space;
-            } else if char != point && in_list {
-                in_list = false;
-                for _j in 0..level + 1 {
-                    output.push(String::from(&end));
-                }
-                level = 0;
-            }
-
-            output.push(line.to_string());
-
-            if i == l.len() - 1 && in_list {
-                in_list = false;
-                for _j in 0..level + 1 {
-                    output.push(String::from(&end));
-                }
-                level = 0;
-            }
-
-            i += 1;
-        }
-
-        output
-    }
-
-    /*
-    finds and formats images
-    */
-    fn img(s: &String) -> String {
-        let mut line = s.clone();
-        let mut in_bracket = false;
-        let mut i_bracket: usize = 0;
-        let mut in_paren = false;
-        let mut i_paren: usize = 0;
-
-        let mut i = 1;
-        while i < len(&line) {
-            let char = slice(&line, i..i + 1);
-            let prev_char = slice(&line, i - 1..i);
-            if slice(&line, i..i + 1) == "[" && prev_char == "!" && !in_bracket {
-                in_bracket = true;
-                i_bracket = i;
-            }
-            if in_bracket && prev_char == "]" && char == "(" {
-                in_bracket = false;
-                in_paren = true;
-                i_paren = i;
-            }
-            if in_paren && char == ")" {
-                in_paren = false;
-                // grabs link
-                let temp_line = line.clone();
-                let link = slice(&temp_line, i_paren + 1..i);
-                // adds the close img
-                line = insert(&line, i + 1, "\"/>");
-                // removes the closing bracket and link portion
-                line = remove(&line, i_paren - 1, i - i_paren + 2);
-                // removes opening bracket and !
-                line = remove(&line, i_bracket - 1, 2);
-                // inserts img and alt
-                line = insert(&line, i_bracket - 1, "<img alt=\"");
-                // adds src to img
-                line = insert(&line, i_bracket + 4, "src=\"");
-                // adds image link to src
-                line = insert(&line, i_bracket + 9, &link);
-                // closes src
-                line = insert(&line, i_bracket + 9 + len(&link), "\" ");
-            }
-            i += 1;
-        }
-        // line.push_str("");
-        line
-    }
-
-    /*
-    finds and formats links
-    */
-    fn a(s: &String) -> String {
-        let mut line = s.clone();
-        let mut in_bracket = false;
-        let mut i_bracket: usize = 0;
-        let mut in_paren = false;
-        let mut i_paren: usize = 0;
-
-        let mut i = 0;
-        while i < len(&line) {
-            let char = slice(&line, i..i + 1);
-            if char == "[" && !in_bracket {
-                in_bracket = true;
-                i_bracket = i;
-            }
-            if i > 0 {
-                let prev_char = slice(&line, i - 1..i);
-                if in_bracket && prev_char == "]" && char == "(" {
-                    in_bracket = false;
-                    in_paren = true;
-                    i_paren = i;
-                }
-                if in_paren && char == ")" {
-                    in_paren = false;
-                    // grabs link
-                    let temp_line = line.clone();
-                    let link = slice(&temp_line, i_paren + 1..i);
-                    // adds the close line
-                    line = insert(&line, i + 1, "</a>");
-                    // removes the closing bracket and link portion
-                    line = remove(&line, i_paren - 1, i - i_paren + 2);
-                    // removes opening bracket
-                    line = remove(&line, i_bracket, 1);
-                    // inserts start of html
-                    line = insert(&line, i_bracket, "<a href=\"");
-                    // closes initial link html
-                    line = insert(&line, i_bracket + 9, "\">");
-                    // adds link to html
-                    line = insert(&line, i_bracket + 9, &link);
-                }
-            }
-            i += 1;
-        }
-        line
-    }
-
-    /*
-    goes through the line and replaces "*"'s with an even number of em elements
-    leaves out the last one if the total number if odd
-    */
-    fn em(s: &String) -> String {
-        let mut line = s.clone();
-        let mut astrices = 0;
-
-        for i in 0..len(&line) {
-            let char = slice(&line, i..i + 1);
-            if char == "*" {
-                astrices += 1;
-            }
-        }
-
-        if astrices % 2 == 1 {
-            astrices -= 1;
-        }
-        if astrices < 2 {
-            return line;
-        }
-
-        while let Some(i) = line.find('*') {
-            if astrices % 2 == 0 {
-                line.replace_range(i..i + 1, "<em>");
-            } else {
-                line.replace_range(i..i + 1, "</em>");
-            }
-            astrices -= 1;
-        }
-
-        line
-    }
-
-    fn b(s: &String) -> String {
-        let mut line = s.clone();
-        let mut astrices = 0;
-
-        for i in 0..len(&line) {
-            let char = slice(&line, i..i + 1);
-            if char == "^" {
-                astrices += 1;
-            }
-        }
-
-        if astrices % 2 == 1 {
-            astrices -= 1;
-        }
-        if astrices < 2 {
-            return line;
-        }
-
-        while let Some(i) = line.find('^') {
-            if astrices % 2 == 0 {
-                line.replace_range(i..i + 1, "<b>");
-            } else {
-                line.replace_range(i..i + 1, "</b>");
-            }
-            astrices -= 1;
-        }
-
-        line
-    }
-
-    /*
-    trims line
-    replaces headers with elements
-    */
-    fn h(s: &String) -> String {
-        let mut line = s.clone();
-        line = trim(&line, 0, len(&line)).0;
-        let mut is_header = false;
-
-        let f = first(&s).1;
-        if len(&s) > f + 2 && slice(&s, f..f + 3) == "###" {
-            line = remove(&s, 0, f + 3);
-            line = remove(&line, 0, first(&line).1);
-            line = insert(&line, 0, "<h3>");
-            line = insert(&line, len(&line), "</h3>");
-            is_header = true;
-        } else if len(&s) > f + 1 && slice(&s, f..f + 2) == "##" {
-            line = remove(&s, 0, f + 2);
-            line = remove(&line, 0, first(&line).1);
-            line = insert(&line, 0, "<h2>");
-            line = insert(&line, len(&line), "</h2>");
-            is_header = true;
-        } else if len(&s) > f && slice(&s, f..f + 1) == "#" {
-            line = remove(&s, 0, f + 1);
-            line = remove(&line, 0, first(&line).1);
-            line = insert(&line, 0, "<h1>");
-            line = insert(&line, len(&line), "</h1>");
-            is_header = true;
-        }
-
-        if !is_header {
-            line = s.clone();
-            // line = insert(&s, 0, "<p>");
-            // line.insert_str(len(&line), "</p>");
-        }
-
-        line
+    		if !in_quotes { match char {
+    			"[" => {
+    				t = remove(&t, i, 1);
+    				t = insert(&t, i, "<");
+    				
+    				let next = first_from(&t, i+1).1;
+    				t = remove(&t, i+1, next);
+    				
+    				let mut j = i;
+    				let elem = slice(&t, i+1..loop {
+    					let check = slice(&t, j..j+1);
+    					if check == "," || check == " " || check == "\n" || check == "|" {
+    						break j;
+    					}
+    					j += 1;
+    				});
+    				elems.push(elem);
+    			},
+    			// "|" => {
+    				// t = remove(&t, i, 1);
+    				// t = insert(&t, i, ">");
+    			// }
+    			"]" => {
+    				t = remove(&t, i, 1);
+    				let elem = match elems.pop() {
+    					Some(e) => e,
+    					None => String::from(""),
+    				};
+    				let end_tag = &format!("</{}>", elem);
+    				t = insert(&t, i, end_tag);
+    			}
+    			_ => {
+    				let mut j = i;
+    				let next = loop {
+    					if j > len(&t) { break j; }
+    					let test_char = slice(&t, j..j+1);
+    					if test_char != " " && test_char != "\t" {
+    						break j;
+    					}
+    					j += 1;
+    				};
+    				match &slice(&t, next..next+1)[..] {
+    					"|" => {
+    						// println!("{}: {}", next, slice(&t, next..next+1));
+    						t = remove(&t, i+1, next-i);
+    						t = insert(&t, i+1, ">");
+    						t = remove(&t, i, 1);
+    					},
+    					":" => {
+    						t = remove(&t, i+1, next-i);
+    						t = remove(&t, i, 1);
+    						t = insert(&t, i, "=");
+    						t = remove(&t, i+1, next-i);
+    					}
+    					"," => {
+    						t = remove(&t, next, 1);
+    					}
+    					_ => (),
+    				}
+    			},
+    		}}
+	   		parse(&t, i+1, elems, in_quotes, b)
+    	}
     }
 }
 
@@ -664,10 +353,14 @@ pub mod text {
     /*
     replaces all target str in String with insert str
     */
-    pub fn replace(s: &String, target: &str, insert: &str) -> String {
+    pub fn replace(s: &String, target: &str, insert: &str, recurse: bool) -> String {
         let mut source = s.clone();
-        while let Some(i) = source.find(target) {
-            source.replace_range(i..i + len(&target.to_string()), insert);
+        if recurse {
+	        while let Some(i) = source.find(target) {
+	            source.replace_range(i..i + len(&target.to_string()), insert);
+	        }
+        } else {
+        	source.replace_range(0..len(&target.to_string()), insert);
         }
         source
     }
@@ -675,11 +368,11 @@ pub mod text {
     /*
     removes from String from index with length, preserving graphemes
     */
-    pub fn remove(s: &String, idx: usize, l: usize) -> String {
-        assert!(idx <= len(&s), "the index was larger than the target slice");
+    pub fn remove(s: &String, i: usize, l: usize) -> String {
+        assert!(i <= len(&s), "the index was larger than the target slice");
 
-        let first = slice(&s, 0..idx);
-        let second = slice(&s, idx + l..len(&s));
+        let first = slice(&s, 0..i);
+        let second = slice(&s, i + l..len(&s));
 
         [first, second].concat()
     }
@@ -707,23 +400,6 @@ pub mod text {
     pub fn first_from(s: &String, i: usize) -> (String, usize) {
         let line = s.clone();
         first(&slice(&line, i..len(&line)))
-    }
-
-	/*
-	returns the last character in a string from an index, as well as the index of that character
-	*/
-    pub fn last_from(s: &String, i: usize) -> (String, usize) {
-        for i in (0..i).rev() {
-    		let char = &slice(&s, i..i+1) as &str;
-    		match char {
-    			" " => (),
-    			"\t" => (),
-    			_ => {
-    				return (String::from(char), i);
-    			},
-    		}
-        }
-        (String::from(""), i)
     }
     
     /*
