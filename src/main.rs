@@ -295,3 +295,5 @@ fn templated(config: &Config, page: &Page) -> String {
 	con_w_space = insert(&con_w_space, 0, &whitespace);
 	replace(&template_contents, &con_w_space, &page.content)
 }
+
+/*  ^(;,;)^   */
