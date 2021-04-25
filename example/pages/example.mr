@@ -3,7 +3,7 @@
 And this is a paragraph of text
 
 [ ul |
-	item 1 
+	item 1
 	item 2
 	[ ul |
 		an indented item

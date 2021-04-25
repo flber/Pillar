@@ -13,13 +13,13 @@ pub mod progress {
 			let inverse = 1.0 / (i as f32 / self.max as f32);
 			let progress = (self.bar_width as f32 / inverse) as usize;
 		
-			print!("\r{:#left$}{} [{:=>mid$}{:->right$}", 
+			if self.bar_width >= progress { print!("\r{:#left$}{} [{:=>mid$}{:->right$}", 
 				(100.0/inverse).ceil(),
 				" ", ">", "]", 
 				left = self.left_pad, 
-				mid = progress, 
+				mid = progress,
 				right = self.bar_width - progress
-			);
+			);}
 			io::stdout().flush().unwrap();
 		}
 	}
@@ -81,20 +81,8 @@ pub mod marble {
         type Err = PageParseError;
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
-            let raw = s.to_string();
-            
-			let width = match terminal_size() {
-				Some(s) => s,
-				None => (100, 100),
-			}.1 as usize;
-			let left_pad = width / 10;
-			let bar_width = width / 2;
-			
-            Ok(parse_marble(&raw, Bar { 
-            	left_pad, 
-            	bar_width, 
-            	max: len(&raw), 
-            }))
+            let raw = s.to_string();			
+            Ok(parse_marble(&raw))
         }
     }
 
@@ -159,6 +147,7 @@ pub mod marble {
 
 	// Preprocessing layer
 	/*
+	this is a paragraph
 	[ ul 
 		stuff 1
 		stuff 1
@@ -167,9 +156,10 @@ pub mod marble {
 
 	// Parsing layer
 	/*
+	[ p | this is a paragraph ]
 	[ ul |
 		[ li | stuff 1 ]
-		[ li | stuff 1 ]
+		[ li | stuff 1 ]uc impl
 	]
 	*/
 
@@ -183,12 +173,12 @@ pub mod marble {
     adds back reserved lines
     returns parsed lines
     */
-    pub fn parse_marble(s: &String, b: Bar) -> Page {
+    pub fn parse_marble(s: &String) -> Page {
         let meta = parse_header(&s).meta;
         let text = parse_header(&s).content;
 
 		let post_process = pre_process(&text);
-		let content: String = parse(&post_process, 0, Vec::<String>::new(), false, b);
+		let content: String = parse(&post_process);
 
         Page {
             meta,
@@ -197,25 +187,53 @@ pub mod marble {
     }
 
     fn pre_process(s: &String) -> String {
-    	let mut t = s.clone();
+    	let t = &s[..];
+    	let mut lines = t.lines();
+    	let mut output = Vec::<String>::new();
 
-		for i in 0..len(&t) {
-			let char = &slice(&t, i..i+1);
-			// if char == "e" {
-				// t = remove(&t, i, 1);
-				// t = insert(&t, i, "▒");
-			// }
+		for _ in 0..lines.clone().count() {
+			let line = match lines.next() {
+				Some(val) => val,
+				None => "",
+			}.to_string();
+			output.push(line);
 		}
-    	
-    	t
+
+		for i in 0..output.len() {
+			let mut line = output[i].clone();
+			if line != "" {
+				let first = first(&line.to_string()).0;
+							
+				if first != "[".to_string() && first != "]".to_string(){
+					line = ["[ p |", &line, " ]"].concat();
+				}
+			}
+			output[i] = insert(&line, len(&line), "\n");
+		}
+		
+    	output.concat().to_string()
     }
 
-    fn parse(s: &String, i: usize, mut elems: Vec<String>, mut in_quotes: bool, b: Bar) -> String {
-		b.print(i);
+    fn parse(s: &String) -> String {		
     	let mut t = s.clone();
-    	if i == len(&t) {
-    		t
-    	} else {
+    	let mut elems = Vec::<String>::new();
+    	let mut in_quotes = false;
+
+		let width = match terminal_size() {
+			Some(s) => s,
+			None => (100, 100),
+		}.1 as usize;
+		let left_pad = width / 10;
+		let bar_width = width / 2;
+    	
+    	let bar = Bar { 
+			left_pad, 
+			bar_width, 
+			max: len(&s), 
+		};
+
+    	for i in 0..len(&t) {
+			bar.print(i);
     		let char = &slice(&t, i..i+1)[..];
     		
     		if char == "\"" {
@@ -287,8 +305,8 @@ pub mod marble {
     				}
     			},
     		}}
-	   		parse(&t, i+1, elems, in_quotes, b)
     	}
+    	return t;
     }
 }
 
@@ -353,14 +371,10 @@ pub mod text {
     /*
     replaces all target str in String with insert str
     */
-    pub fn replace(s: &String, target: &str, insert: &str, recurse: bool) -> String {
+    pub fn replace(s: &String, target: &str, insert: &str) -> String {
         let mut source = s.clone();
-        if recurse {
-	        while let Some(i) = source.find(target) {
-	            source.replace_range(i..i + len(&target.to_string()), insert);
-	        }
-        } else {
-        	source.replace_range(0..len(&target.to_string()), insert);
+        while let Some(i) = source.find(target) {
+            source.replace_range(i..i + len(&target.to_string()), insert);
         }
         source
     }

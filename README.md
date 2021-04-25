@@ -1,3 +1,4 @@
+r
 # Pillar
 A simple site generator with template support, written in plain (and now slightly more idiomatic) Rust.
 

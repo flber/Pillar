@@ -18,7 +18,7 @@ const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 fn get_banner() -> std::string::String {
     format!(
         "{} Version {}
-		Convert marble to html\n",
+Convert marble to html\n",
         AUTHORS, VERSION,
     )
 }
@@ -47,44 +47,43 @@ fn main() -> std::io::Result<()> {
                     let mut contents = fs::read_to_string(&path_str)
                         .expect("Something went wrong reading a marble file");
 
-                    let short_date = get_date_meta(&path_str);
+	                let short_date = get_date_meta(&path_str);
 
                     // replaces music marker with an unordered list of folders in your music dir
                     if contents.contains("{{music}}") {
                         contents = replace_music(&contents, &config.music_path);
                     }
-
+                    
                     // replaces latest marker with the `LATEST_LENGTH` most recently modified mr pages
                     if contents.contains("{{latest}}") {
                         contents =
                             replace_latest(&contents, &config.marble_path, config.latest_length);
                     }
 
-					// generates target string
-                    let target = [
-                        config.html_path.clone(),
-                        slice(
-                            &path,
-                            len(&config.marble_path.to_string()) + 1..len(&path) - 3,
-                        ),
-                        String::from("html"),
-                    ]
-                    .concat();
-                    
-                    println!("+ {}", target);
+					// formats target string
+	                let target = [
+	                    config.html_path.clone(),
+	                    slice(
+	                        &path,
+	                        len(&config.marble_path.to_string()) + 1..len(&path) - 3,
+	                    ),
+	                    String::from("html"),
+	                ].concat();
+	                println!("+ {}", target);
 
-                    // replaces content and date markers
-                    contents = replace(&contents, "{{date}}", &short_date, true);
-                    let page = contents.parse::<Page>().unwrap();
-                    // this just adds a newline so the progress bars are on separate lines
-                    println!();
-                    
-                    let templated_string = templated(&config, &page);
-                    let completed = replace(&templated_string, "{{date}}", &short_date, true);
-                    match fs::write(&target, completed) {
-                        Ok(_) => (),
-                        Err(e) => println!("failed to write to {}: {}", &target, e),
-                    };
+	                // replaces content and date markers
+	                contents = replace(&contents, "{{date}}", &short_date);
+					let page = contents.parse::<Page>().unwrap();
+					// make progress bars on different lines
+					println!();
+	                
+	                let templated_string = templated(&config, &page);
+	                let completed = replace(&templated_string, "{{date}}", &short_date);
+	                match fs::write(&target, completed) {
+	                    Ok(_) => (),
+	                    Err(e) => println!("failed to write to {}: {}", &target, e),
+	                };
+	                
                 }
             }
             "clean" => (),
@@ -111,16 +110,17 @@ impl Config {
                 File::create(".pillar.toml").unwrap_or_else(|create_error| {
                     panic!("Problem creating the file: {:?}", create_error);
                 });
-                let default = "[paths]\n\
-                    template_path = \"templates/\"\n\
-                    marble_path = \"pages/\"\n\
-                    html_path = \"docs/\"\n\
-                    music_path = \"/home/user/Music/\"\n\
-                    \n\
-                    [values]\n\
-                    latest_length = 15";
-                fs::write(".pillar.toml", default).unwrap();
-                File::open(".pillar.toml").unwrap()
+                let default = 
+                    "[paths]\n\
+	                template_path = \"templates/\"\n\
+	                marble_path = \"pages/\"\n\
+	                html_path = \"docs/\"\n\
+	                music_path = \"/home/user/Music/\"\n\
+	                \n\
+	                [values]\n\
+	                latest_length = 15";
+				fs::write(".pillar.toml", default).unwrap();
+				File::open(".pillar.toml").unwrap()
             } else {
                 panic!("Problem opening the file: {:?}", error);
             }
@@ -139,10 +139,10 @@ impl Config {
             .unwrap();
 
         Some(Config {
-            template_path: slice(&template_path, 1..len(&template_path) - 1),
-            marble_path: slice(&marble_path, 1..len(&marble_path) - 1),
-            html_path: slice(&html_path, 1..len(&html_path) - 1),
-            music_path: slice(&music_path, 1..len(&music_path) - 1),
+            template_path: slice(&template_path, 1..len(&template_path)-1),
+            marble_path: slice(&marble_path, 1..len(&marble_path)-1),
+            html_path: slice(&html_path, 1..len(&html_path)-1),
+            music_path: slice(&music_path, 1..len(&music_path)-1),
             latest_length,
         })
     }
@@ -176,9 +176,9 @@ fn replace_music(contents: &String, path: &str) -> String {
         }
         Err(e) => println!("Failed to open {} with error {}", path, e),
     }
-    music = replace(&music, path, "", true);
-    music = replace(&music, "\"", "", true);
-    replace(&contents, "{{music}}", &music, true)
+    music = replace(&music, path, "");
+    music = replace(&music, "\"", "");
+    replace(&contents, "{{music}}", &music)
 }
 
 fn replace_latest(contents: &String, path: &str, l: usize) -> String {
@@ -224,8 +224,8 @@ fn replace_latest(contents: &String, path: &str, l: usize) -> String {
 
             let mut title = String::from("");
             // gets the meta header from the post you're checking
-            let temp_contents =
-                fs::read_to_string(&post.0).expect("Something went wrong reading a marble file");
+            let temp_contents = fs::read_to_string(&post.0)
+                .expect("Something went wrong reading a marble file");
             let header_meta = parse_header(&temp_contents).meta;
             for header_var in header_meta {
                 if header_var.name == "title" {
@@ -235,15 +235,15 @@ fn replace_latest(contents: &String, path: &str, l: usize) -> String {
             }
 
             if title.is_empty() {
-                let mut title = replace(&post.0, path, "", true);
-                title = replace(&title, ".mr", "", true);
+                let mut title = replace(&post.0, path, "");
+                title = replace(&title, ".mr", "");
                 posts_list.push_str(&title);
             } else {
                 posts_list.push_str(&title);
             }
             posts_list.push_str("](");
-            let mut relative_path = replace(&post.0, path, "", true);
-            relative_path = replace(&relative_path, ".mr", ".html", true);
+            let mut relative_path = replace(&post.0, path, "");
+            relative_path = replace(&relative_path, ".mr", ".html");
             posts_list.push_str(&relative_path);
             posts_list.push(')');
             posts_list.push('\n');
@@ -252,45 +252,46 @@ fn replace_latest(contents: &String, path: &str, l: usize) -> String {
         }
     }
     // this is in the format of `- DDMMYY [{Title}](path)` where the path is modified to be an html file in the html dir
-    replace(&contents, "{{latest}}", &posts_list, true)
+    replace(&contents, "{{latest}}", &posts_list)
 }
 
 fn templated(config: &Config, page: &Page) -> String {
-    // starts with default template file
-    let mut template_file = String::from("default.html");
-    for header_var in &page.meta {
-        if header_var.name == "template" {
-            // if the marble meta header has a template value, sets `template_file` to that
-            template_file = header_var.value.clone();
-            template_file.push_str(".html");
-        }
-    }
-    let template_path = [config.template_path.clone(), template_file].concat();
+	// starts with default template file
+	let mut template_file = String::from("default.html");
+	for header_var in &page.meta {
+	    if header_var.name == "template" {
+	        // if the marble meta header has a template value, sets `template_file` to that
+	        template_file = header_var.value.clone();
+	        template_file.push_str(".html");
+	    }
+	}
+	let template_path = [config.template_path.clone(), template_file].concat();
 
-    // gets the contents of the given template file
-    let template_contents = match fs::read_to_string(&template_path) {
-        Ok(c) => c,
-        Err(_) => {
-            // if it can't be loaded, just load the default
-            let mut temp_path = config.template_path.clone();
-            temp_path.push_str("default.html");
-            fs::read_to_string(&temp_path).expect("couldn't load default template")
-        }
-    };
+	// gets the contents of the given template file
+	let template_contents = match fs::read_to_string(&template_path) {
+	    Ok(c) => c,
+	    Err(_) => {
+	        // if it can't be loaded, just load the default
+	        let mut temp_path = config.template_path.clone();
+	        temp_path.push_str("default.html");
+	        fs::read_to_string(&temp_path)
+	            .expect("couldn't load default template")
+	    }
+	};
 
-    let template_lines: Vec<&str> = template_contents.as_str().lines().collect();
+	let template_lines: Vec<&str> = template_contents.as_str().lines().collect();
 
-    // figures out how indented the content marker is
-    let mut whitespace = String::new();
-    for l in template_lines {
-        let line = l.to_string();
-        if line.contains("{{content}}") {
-            whitespace = slice(&line, 0..first(&line).1);
-        }
-    }
+	// figures out how indented the content marker is
+	let mut whitespace = String::new();
+	for l in template_lines {
+		let line = l.to_string();
+	    if line.contains("{{content}}") {
+	        whitespace = slice(&line, 0..first(&line).1);
+	    }
+	}
 
-    // replaces content in template
-    let mut con_w_space = String::from("{{content}}");
-    con_w_space = insert(&con_w_space, 0, &whitespace);
-    replace(&template_contents, &con_w_space, &page.content, true)
+	// replaces content in template
+	let mut con_w_space = String::from("{{content}}");
+	con_w_space = insert(&con_w_space, 0, &whitespace);
+	replace(&template_contents, &con_w_space, &page.content)
 }
