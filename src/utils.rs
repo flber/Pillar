@@ -55,10 +55,10 @@ pub mod granite {
     use crate::utils::text::*;
     use crate::utils::progress::*;
     // use std::cmp::Ordering;
-	use std::fmt;
-	use std::str::FromStr;
-	// uncomment for debug output
-	use std::io::stdin;
+    use std::fmt;
+    use std::str::FromStr;
+    // uncomment for debug output
+    use std::io::stdin;
 
     pub struct Metadata {
         pub name: String,
@@ -176,10 +176,10 @@ pub mod granite {
         let meta = parse_header(&s).meta;
         let text = parse_header(&s).content;
 
-		let post_process = pre_process(&text);
-		
-		let content = if debug { parse(&post_process, true) }
-		else { parse(&post_process, false) };
+        let post_process = pre_process(&text);
+
+        let content = if debug { parse(&post_process, true) }
+        else { parse(&post_process, false) };
 
         Page {
             meta,
@@ -483,93 +483,3 @@ pub mod text {
         sub_string.join("")
     }
 }
-
-/*
-pub mod time {
-
-    use crate::utils::text::insert;
-
-    // returns a day, month, and year, from a given epoch number. pretty scuffed.
-    pub fn calc_date(s: String) -> (String, String, String) {
-        let mut _seconds = s.parse::<i32>().unwrap();
-        let mut _minutes = _seconds / 60;
-        _seconds -= _minutes * 60;
-
-        let mut _hours = _minutes / 60;
-        _minutes -= _hours * 60;
-
-        let mut days = _hours / 24;
-        _hours -= days * 24;
-
-        // Unix time starts in 1970 on a Thursday
-        let mut year = 1970;
-        let mut month = 0;
-        let mut _day_of_week = 4;
-
-        loop {
-            let leap_year = year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-            let days_in_year = if leap_year { 366 } else { 365 };
-            if days >= days_in_year {
-                _day_of_week += if leap_year { 2 } else { 1 };
-                days -= days_in_year;
-                if _day_of_week >= 7 {
-                    _day_of_week -= 7;
-                }
-                year += 1;
-            } else {
-                _day_of_week += days;
-                _day_of_week %= 7;
-
-                // calculate the month and day
-                let days_in_month = vec![31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-                for m in 0..12 {
-                    let mut dim = days_in_month[m];
-
-                    // add a day to February if this is a leap year
-                    if m == 1 && leap_year {
-                        dim += 1;
-                    }
-
-                    if days >= dim {
-                        days -= dim;
-                    } else {
-                        month = m;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-
-        days += 1;
-        month += 1;
-
-        let mut f_days: String;
-        let mut f_month: String;
-        let mut f_year: String;
-
-        if days < 10 {
-            f_days = days.to_string();
-            f_days = insert(&f_days, 0, "0");
-        } else {
-            f_days = days.to_string();
-        }
-
-        if month < 10 {
-            f_month = month.to_string();
-            f_month = insert(&f_month, 0, "0");
-        } else {
-            f_month = month.to_string();
-        }
-
-        if year < 10 {
-            f_year = year.to_string();
-            f_year = insert(&f_year, 0, "0");
-        } else {
-            f_year = year.to_string();
-        }
-
-        (f_days, f_month, f_year)
-    }
-}
-*/
