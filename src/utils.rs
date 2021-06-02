@@ -57,6 +57,8 @@ pub mod marble {
     // use std::cmp::Ordering;
 	use std::fmt;
 	use std::str::FromStr;
+	// uncomment for debug output
+	use std::io::stdin;
 
     pub struct Metadata {
         pub name: String,
@@ -82,8 +84,15 @@ pub mod marble {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let raw = s.to_string();			
-            Ok(parse_marble(&raw))
+            Ok(parse_marble(&raw, false))
         }
+    }
+
+    impl Page {
+    	pub fn new(s: &str, debug: bool) -> Self {
+    		let raw = s.to_string();
+    		parse_marble(&raw, debug)
+    	}
     }
 
     impl fmt::Display for Page {
@@ -145,7 +154,7 @@ pub mod marble {
         }
     }
 
-	// Preprocessing layer
+	// Preprocessing layer !!Not in use!!
 	/*
 	this is a paragraph
 	[ ul 
@@ -159,26 +168,18 @@ pub mod marble {
 	[ p | this is a paragraph ]
 	[ ul |
 		[ li | stuff 1 ]
-		[ li | stuff 1 ]uc impl
+		[ li | stuff 1 ]
 	]
 	*/
 
-    /*
-    starts by pulling out lines in `!code!` blocks
-    replaces `!code!` markers with respective html elements
-    puts them into a reserved vec
-    replaces the line with a marker for later
-    goes through each line and does single line formatting
-    does multi line formating
-    adds back reserved lines
-    returns parsed lines
-    */
-    pub fn parse_marble(s: &String) -> Page {
+    pub fn parse_marble(s: &String, debug: bool) -> Page {
         let meta = parse_header(&s).meta;
         let text = parse_header(&s).content;
 
 		let post_process = pre_process(&text);
-		let content: String = parse(&post_process);
+		
+		let content = if debug { parse(&post_process, true) }
+		else { parse(&post_process, false) };
 
         Page {
             meta,
@@ -186,6 +187,7 @@ pub mod marble {
         }
     }
 
+	// not implemented right not, still deciding on its usefulness
     fn pre_process(s: &String) -> String {
     	let t = &s[..];
     	let mut lines = t.lines();
@@ -198,9 +200,11 @@ pub mod marble {
 			}.to_string();
 			output.push(line);
 		}
-
+		
 		for i in 0..output.len() {
-			let mut line = output[i].clone();
+			// add `mut` if doing preprocessing
+			let line = output[i].clone();
+			/*
 			if line != "" {
 				let first = first(&line.to_string()).0;
 							
@@ -208,16 +212,18 @@ pub mod marble {
 					line = ["[ p |", &line, " ]"].concat();
 				}
 			}
+			*/
 			output[i] = insert(&line, len(&line), "\n");
 		}
 		
     	output.concat().to_string()
     }
 
-    fn parse(s: &String) -> String {		
+    fn parse(s: &String, debug: bool) -> String {		
     	let mut t = s.clone();
     	let mut elems = Vec::<String>::new();
     	let mut in_quotes = false;
+    	let mut in_content = false;
 
 		let width = match terminal_size() {
 			Some(s) => s,
@@ -231,20 +237,53 @@ pub mod marble {
 			bar_width, 
 			max: len(&s), 
 		};
+		
+		let mut i = 0;
+    	while i < len(&t) {
+    		if debug {
+	    		// Debugging output
+	    		print!("{esc}c", esc = 27 as char);
+	    		println!("{}@{}", slice(&t, 0..i), slice(&t, i+1..len(&t)));
+	    		println!("#################\nelems: {:#?}", elems);
+	    		println!("in_quotes: {}", in_quotes);
+	    		println!("in_content: {}", in_content);
+			    let mut input_string = String::new();
 
-    	for i in 0..len(&t) {
-			bar.print(i);
+			    loop {
+			    	println!("press enter to continue");
+				    stdin().read_line(&mut input_string)
+				    	.ok()
+				        .expect("Failed to read line");
+					if input_string == "\n" {
+						break
+					} 		    	
+			    }
+		    } else {
+				bar.print(i);
+			}
+			
     		let char = &slice(&t, i..i+1)[..];
-    		
-    		if char == "\"" {
-  				if in_quotes {
-  					in_quotes = false; 
-  				} else if !in_quotes {
-  					in_quotes = true;
-  				}
-  			}
 
-    		if !in_quotes { match char {
+			match char {
+				"\"" => {
+	  				if in_quotes {
+	  					in_quotes = false;
+	  					// a bit scuffed, but it prevents mark [A] from deleting the character before the closing quote.
+	  					i += 1;
+	  				} else if !in_quotes {
+	  					in_quotes = true;
+	  				}
+				},
+				"[" | "]" => {
+					in_content = false;
+				},
+				// "|" => {
+					// if !in_content { in_content = true; }
+				// },
+				_ => (),
+			}
+    		
+    		if !in_quotes && !in_content { match char {
     			"[" => {
     				t = remove(&t, i, 1);
     				t = insert(&t, i, "<");
@@ -262,10 +301,6 @@ pub mod marble {
     				});
     				elems.push(elem);
     			},
-    			// "|" => {
-    				// t = remove(&t, i, 1);
-    				// t = insert(&t, i, ">");
-    			// }
     			"]" => {
     				t = remove(&t, i, 1);
     				let elem = match elems.pop() {
@@ -287,24 +322,34 @@ pub mod marble {
     				};
     				match &slice(&t, next..next+1)[..] {
     					"|" => {
-    						// println!("{}: {}", next, slice(&t, next..next+1));
     						t = remove(&t, i+1, next-i);
     						t = insert(&t, i+1, ">");
     						t = remove(&t, i, 1);
+    						in_content = true;
     					},
     					":" => {
     						t = remove(&t, i+1, next-i);
     						t = remove(&t, i, 1);
     						t = insert(&t, i, "=");
     						t = remove(&t, i+1, next-i);
-    					}
+    					},
     					"," => {
     						t = remove(&t, next, 1);
+    					},
+    					"\"" => {
+    						// [A]
+    						t = remove(&t, next-1, 1);
+    						// counteracts the skipping effect of deleting the current char
+    						i -= 1;
     					}
     					_ => (),
     				}
     			},
     		}}
+    		if i > len(&t) {
+    			break
+    		}
+    		i += 1;
     	}
     	return t;
     }
@@ -429,12 +474,6 @@ pub mod text {
     returns a slice of a string from a range, utf-8 compliant
     */
     pub fn slice(s: &String, r: Range<usize>) -> String {
-        // let graphemes = UnicodeSegmentation::graphemes(&s[..], true).collect::<Vec<&str>>();
-        // let mut sub_graph = Vec::<&str>::new();
-        // for i in r {
-        // sub_graph.push(graphemes[i]);
-        // }
-        // sub_graph.join("")
         let mut sub_string = Vec::<String>::new();
         for (i, c) in s.chars().enumerate() {
             if r.contains(&i) {
@@ -445,13 +484,12 @@ pub mod text {
     }
 }
 
+/*
 pub mod time {
 
     use crate::utils::text::insert;
 
-    /*
-    returns a day, month, and year, from a given epoch number
-    */
+    // returns a day, month, and year, from a given epoch number. pretty scuffed.
     pub fn calc_date(s: String) -> (String, String, String) {
         let mut _seconds = s.parse::<i32>().unwrap();
         let mut _minutes = _seconds / 60;
@@ -463,7 +501,7 @@ pub mod time {
         let mut days = _hours / 24;
         _hours -= days * 24;
 
-        /* Unix time starts in 1970 on a Thursday */
+        // Unix time starts in 1970 on a Thursday
         let mut year = 1970;
         let mut month = 0;
         let mut _day_of_week = 4;
@@ -482,12 +520,12 @@ pub mod time {
                 _day_of_week += days;
                 _day_of_week %= 7;
 
-                /* calculate the month and day */
+                // calculate the month and day
                 let days_in_month = vec![31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
                 for m in 0..12 {
                     let mut dim = days_in_month[m];
 
-                    /* add a day to February if this is a leap year */
+                    // add a day to February if this is a leap year
                     if m == 1 && leap_year {
                         dim += 1;
                     }
@@ -534,3 +572,4 @@ pub mod time {
         (f_days, f_month, f_year)
     }
 }
+*/

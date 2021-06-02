@@ -2,6 +2,7 @@
 template_path = "templates/"
 marble_path = "pages/"
 html_path = "docs/"
+plugin_path = "plugins/"
 music_path = "/home/benh/Music/"
 	
 [values]
