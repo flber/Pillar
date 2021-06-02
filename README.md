@@ -32,11 +32,17 @@ The `latest_length` parameter is currently not used, but was originally intended
 
 Pillar uses the Granite (.gn)  markup format, which is more similar HTML than it is to markdown.
 Granite maps 1:1 with html, so the conversion process is relatively simple, and is done in a single pass. The syntax gets rid of close tags in favor of close square brackets, as so:
+
 html: `<p> This is a paragraph </p>`
+
 granite: `[p|This is a paragraph]`
+
 The only other difference in syntax is the use of commas and semicolons in the elements' attribute sections. This is a small change, and the normal html syntax can also be used.
+
 html: `<a href="link.com">A link</a>`
+
 granite: `[a, href: "link.com"|A link]`
+
 As you can see, the Granite syntax is very similar to html, but is in my mind a bit easier to read and write, mostly due to the lack of close tags and its small syntax footprint. The fact that it maps to html also means that any html element can be used; there are none of the restrictions that markdown has. For more examples, look to the `example` folder in this repository. If you like, just clone that directory to your system, add the pillar executable, and run it. This will give you a small, but working, example of a Pillar setup.
 
 ## Headers
