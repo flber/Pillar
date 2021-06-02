@@ -12,10 +12,10 @@ for lines in file:
 
 for line in sys.stdin:
     if "{{music}}" in line:
-        albums = "[ul|\n"
+        albums = "<ul>\n"
         for file in os.scandir(music_path[1:-1]):
             if file.is_dir():
-                albums += "\t[li| " + file.path[len(music_path)-2:] + " ]\n"
-        albums += "]"
+                albums += "\t<li> " + file.path[len(music_path)-2:] + " </li>\n"
+        albums += "</ul>"
         line = line.replace("{{music}}", albums)
     sys.stdout.write(line)
