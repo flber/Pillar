@@ -30,7 +30,7 @@ The `latest_length` parameter is currently not used, but was originally intended
 
 ## Granite
 
-Pillar uses the Granite (.gn)  markup format, which is more similar HTML than it is to markdown.
+Pillar uses the Granite (.gn)  markup format, which is more similar HTML than it is to markdown. It also isn't too picky about whitespace.
 Granite maps 1:1 with html, so the conversion process is relatively simple, and is done in a single pass. The syntax gets rid of close tags in favor of close square brackets, as so:
 
 html: `<p> This is a paragraph </p>`
