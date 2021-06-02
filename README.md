@@ -1,110 +1,71 @@
 # Pillar
-A simple site generator with template support, written in plain (and now slightly more idiomatic) Rust.
-
-## Now with unicode support!
+A simple site generator with template support, written in plain (and now slightly more idiomatic) Rust, with support for extensions in whatever language you prefer.
 
 Used in [[my site]](https://mineralexistence.com)
 
-A nice little demo is available in the `examples/` folder of this repo, which shows off Pillar's features (and honestly is mostly a place for me to test and debug). The main page is currently in (probably totally meaningless) Japanese, to stress test the unicode support.
+A little demo is available in the `examples/` folder of this repo, which shows off Pillar's features (and honestly is mostly a place for me to test and debug).
 
-Pillar uses the marble markup format, which is quite similar to markdown but with a few changes:
-- Like markdown, headers are defined with `#`. Marble has support for header levels 1 to 3 (because when are you really using anything smaller?)
-- Italics are also defined with `*`
-- Bold is defined by surrounding the text with `^`
-- Images and links follow normal markdown syntax
-- Unordered lists still use `-`, but it's far less picky about initial indentation than some markdown parsers (I'm looking at you cmark) and supports weird changes in indentation
-- Ordered lists just use `~`, so no need for manually numbering your lists. Same indentation support as ordered lists.
-- Blockquotes use the same syntax as markdown, a `>` with as much or as little whitespace before and after as you want.
-- To define a code block use `!code!` at the top and bottom of your code block
-- To define a metadata header, put `!meta!` at the top and bottom of your variables
+## Commands
+
+Pillar has only a few commands. With no arguments, it will give you the help menu. That help menu will also be printed with the arguments `--help` or `-h`. Run `./pillar build` to generate your site, and `./pillar build --debug` to get the debug parser, where it will show you what it's doing step-by-step (note that this is *much* slower, so should be used only if you want to see how the parser works).
+That's all of the command arguments, and anything else will just give you the help menu.
+
+## Configuration
+
+Pillar expects a `.pillar.toml` file to be in the same directory as your `pillar` executable, which controls the customization. It's currently quite a small file, the default being:
+```toml
+[paths]
+template_path = "templates/"
+marble_path = "pages/"
+html_path = "docs/"
+plugin_path = "plugins/"
+music_path = "/home/user/Music/"
+	
+[values]
+latest_length = 15
+```
+Pillar takes all .gn files in the `marble_path` directory and parses them into html, templating them with the templates in the `template_path` directory, and outputting the html to the `html_path` directory. Before the html is saved to the html directory, each page is passed through all the scripts in the `plugin_path` directory (see the [extensions](#Extensions) section).
+
+The `latest_length` parameter is currently not used, but was originally intended to control the length of the list of latest pages (see the [extensions](#Extensions) section for more information on how extensions are currently handled).
+
+## Granite
+
+Pillar uses the Granite (.gn)  markup format, which is more similar HTML than it is to markdown. It also isn't too picky about whitespace.
+Granite maps 1:1 with html, so the conversion process is relatively simple, and is done in a single pass. The syntax gets rid of close tags in favor of close square brackets, as so:
+
+html: `<p> This is a paragraph </p>`
+
+granite: `[p|This is a paragraph]`
+
+The only other difference in syntax is the use of commas and semicolons in the elements' attribute sections. This is a small change, and the normal html syntax can also be used.
+
+html: `<a href="link.com">A link</a>`
+
+granite: `[a, href: "link.com"|A link]`
+
+As you can see, the Granite syntax is very similar to html, but is in my mind a bit easier to read and write, mostly due to the lack of close tags and its small syntax footprint. The fact that it maps to html also means that any html element can be used; there are none of the restrictions that markdown has. For more examples, look to the `example` folder in this repository. If you like, just clone that directory to your system, add the pillar executable, and run it. This will give you a small, but working, example of a Pillar setup.
+
+## Headers
+
+- To define a metadata header for a page, put `!meta!` at the top and bottom of your variables
 	- variables are declared with the `name: value` pattern (it's not too particular about whitespace)
-	- the `title` variable is used to set the title for the `{{latest}}` substitution
-	- without this deceleration the `{{latest}}` substitution will just use trimmed filenames
+	- the `title` variable is used to set the title (used for the `{{latest}}` substitution)
 	- the `template` variable sets the template for the page, defaulting to `default`, where the value is the file name (without extension) of a template in the given template directory
-- `{{date}}` replaces with the date the content was last modified (the marble, not the html itself)
+	- example:
+	```
+	!meta!
+	title: Example page
+	template: fancy_template
+	!meta!
+	```
+
+## Extensions
+
+Pillar supports extensions in the form of executable scripts in your defined plugins folder. These work by receiving each parsed page, in html, through stdin. The script should then return a modified form of the page in its stdout. There are three extensions in the example folder, which replace the following tags:
+- `{{date}}` replaces with the date the content was last modified (the granite, not the html itself)
 - `{{music}}` replaces with an unordered list of your album directory names in a designated music path
 - `{{latest}}` replaces with a given number of the latest updated pages in an unordered list
 
-I'm also planning on adding several more niche elements to the marble format, so that list above will grow over time.
+## Syntax Highlighting
 
-Pillar also does some html substitutions to make templates more interesting
-- `{{content}}` is replaced with the content of a give marble page, parsed into html (sort of necessary)
-- `{{date}}` has the same behaviour as in marble
-
-## Examples
-
-```
-### This is an h3
-##		this is an h2
-	# this is an h1
-```
-renders to
-```
-<h3>This is an h3</h3>
-<h2>this is an h2</h2>
-<h1>this is an h1</h1>
-```
----
-
-```
-this is a normal paragraph
-this is too, but with *italics*
-```
-renders to
-```
-<p>this is a normal paragraph</p>
-<p>this is too, but with <em>italics</em></p>
-```
----
-
-```
-- an unordered list
-	- still unordered
-			- unordered, but indented twice!
-- unordered and back to normal 
-~ this is an ordered list
-~ it has the same abilities as the unordered list
-```
-renders to
-```
-<ul>
-<li>an unordered list</li>
-<ul>
-<li>still unordered</li>
-<ul>
-<ul>
-<li>unordered, but indented twice!</li>
-</ul>
-</ul>
-</ul>
-<li>unordered and back to normal </li>
-</ul>
-<ol>
-<li>this is an ordered list</li>
-<li>it has the same abilities as the unordered list</li>
-</ol>
-```
----
-
-```
-> This is a simple blockquote, nothing too fancy here
-!code!
-let mut this = "an actual code block";
-this = ["this is", &this].concat();
-	// here's some indentation
-!code!
-```
-renders to
-```
-<blockquote>
-<p>This is a simple blockquote, nothing too fancy here</p>
-</blockquote>
-<pre><code>
-let mut this = "an actual code block";
-this = ["this is", &this].concat();
-	// here's some indentation
-</code></pre>
-```
-
-Lot's of updates and improvements to come!
-
+If you use the [micro text editor](https://github.com/zyedidia/micro), I wrote a syntax highlighting file which works nicely with Granite files which you can find in the `examples` folder. Just put it into your `.config/micro/syntax/` directory, and you should get decent syntax highlighting.

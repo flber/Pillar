@@ -1,6 +1,6 @@
 :root{
-	--bg-color: white;
-	--color: black;
+	--bg-color: black;
+	--color: white;
 	--max: 800px;
 	--fonts:tzimmes, serif;
 }
@@ -68,7 +68,7 @@ div.right-border{padding-left: 10px;padding-right: 10px;}
 div.right-border a::after{content: "│"}
 
 
-body:target{--bg-color: black;--color: white;}
+body:target{--bg-color: white;--color: black;}
 /* > nav > div > div > */
 body span.light{display: none;}
 body span.dark{display: inline;}
