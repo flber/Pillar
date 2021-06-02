@@ -55,10 +55,10 @@ pub mod granite {
     use crate::utils::text::*;
     use crate::utils::progress::*;
     // use std::cmp::Ordering;
-	use std::fmt;
-	use std::str::FromStr;
-	// uncomment for debug output
-	use std::io::stdin;
+    use std::fmt;
+    use std::str::FromStr;
+    // uncomment for debug output
+    use std::io::stdin;
 
     pub struct Metadata {
         pub name: String,
@@ -176,10 +176,10 @@ pub mod granite {
         let meta = parse_header(&s).meta;
         let text = parse_header(&s).content;
 
-		let post_process = pre_process(&text);
-		
-		let content = if debug { parse(&post_process, true) }
-		else { parse(&post_process, false) };
+        let post_process = pre_process(&text);
+
+        let content = if debug { parse(&post_process, true) }
+        else { parse(&post_process, false) };
 
         Page {
             meta,
