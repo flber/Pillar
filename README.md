@@ -16,7 +16,7 @@ Pillar expects a `.pillar.toml` file to be in the same directory as your `pillar
 ```toml
 [paths]
 template_path = "templates/"
-marble_path = "pages/"
+granite_path = "pages/"
 html_path = "docs/"
 plugin_path = "plugins/"
 music_path = "/home/user/Music/"
@@ -24,7 +24,7 @@ music_path = "/home/user/Music/"
 [values]
 latest_length = 15
 ```
-Pillar takes all .gn files in the `marble_path` directory and parses them into html, templating them with the templates in the `template_path` directory, and outputting the html to the `html_path` directory. Before the html is saved to the html directory, each page is passed through all the scripts in the `plugin_path` directory (see the [extensions](#Extensions) section).
+Pillar takes all .gn files in the `granite_path` directory and parses them into html, templating them with the templates in the `template_path` directory, and outputting the html to the `html_path` directory. Before the html is saved to the html directory, each page is passed through all the scripts in the `plugin_path` directory (see the [extensions](#Extensions) section).
 
 The `latest_length` parameter is currently not used, but was originally intended to control the length of the list of latest pages (see the [extensions](#Extensions) section for more information on how extensions are currently handled).
 
