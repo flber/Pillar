@@ -50,7 +50,7 @@ pub mod progress {
 	
 }
 
-pub mod marble {
+pub mod granite {
 
     use crate::utils::text::*;
     use crate::utils::progress::*;
@@ -84,14 +84,14 @@ pub mod marble {
 
         fn from_str(s: &str) -> Result<Self, Self::Err> {
             let raw = s.to_string();			
-            Ok(parse_marble(&raw, false))
+            Ok(parse_granite(&raw, false))
         }
     }
 
     impl Page {
     	pub fn new(s: &str, debug: bool) -> Self {
     		let raw = s.to_string();
-    		parse_marble(&raw, debug)
+    		parse_granite(&raw, debug)
     	}
     }
 
@@ -172,7 +172,7 @@ pub mod marble {
 	]
 	*/
 
-    pub fn parse_marble(s: &String, debug: bool) -> Page {
+    pub fn parse_granite(s: &String, debug: bool) -> Page {
         let meta = parse_header(&s).meta;
         let text = parse_header(&s).content;
 

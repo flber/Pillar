@@ -7,10 +7,10 @@ use std::io::prelude::*;
 use std::process::{Command, Stdio};
 use toml::Value;
 mod utils;
-use utils::marble::*;
+use utils::granite::*;
 use utils::text::*;
 
-const HELP_MENU: &str = "Builds static site from marble files \n\nUSAGE: \n\tpillar [OPTIONS] [COMMAND] \n\nOPTIONS: \n\t-h\tprints this information \n\t-V\tprints current version \n\nCOMMANDS: \n\tbuild\tbuilds html from marble \n\tclean\tclears html directory \n";
+const HELP_MENU: &str = "Builds static site from granite files \n\nUSAGE: \n\tpillar [OPTIONS] [COMMAND] \n\nOPTIONS: \n\t-h\tprints this information \n\t-V\tprints current version \n\nCOMMANDS: \n\tbuild\tbuilds html from granite \n\tclean\tclears html directory \n";
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -18,7 +18,7 @@ const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
 fn get_banner() -> std::string::String {
     format!(
         "{} Version {}
-Convert marble to html\n",
+Convert granite to html\n",
         AUTHORS, VERSION,
     )
 }
@@ -55,7 +55,7 @@ fn main() -> std::io::Result<()> {
 	            	_ => (),
 	            }
             },
-            // clean does nothing right now...
+            // this clean also does nothing right now...
             "clean" => (),
             _ => println!("{}", HELP_MENU),
         },
@@ -64,25 +64,22 @@ fn main() -> std::io::Result<()> {
 
     if should_build {
 		let config = Config::new().unwrap();
-		for e in fs::read_dir(&config.marble_path)? {
+		for e in fs::read_dir(&config.granite_path)? {
 			let entry = e?;
 			// fixing path
 			let path = format!("{:?}", entry.path());
 			let path_str = slice(&path, 1..len(&path) - 1);
 
-			// gets contents of marble file
-			let mut contents = fs::read_to_string(&path_str)
-			    .expect("Something went wrong reading a marble file");
-
-			//This is where plugins are run
-			contents = run_plugins(&config, &contents)?;
+			// gets contents of granite file
+			let contents = fs::read_to_string(&path_str)
+			    .expect("Something went wrong reading a granite file");
 
 			// formats target string
 			let target = [
 			    config.html_path.clone(),
 			    slice(
 			        &path,
-			        len(&config.marble_path.to_string()) + 1..len(&path) - 3,
+			        len(&config.granite_path.to_string()) + 1..len(&path) - 3,
 			    ),
 			    String::from("html"),
 			].concat();
@@ -97,7 +94,9 @@ fn main() -> std::io::Result<()> {
 			// makes progress bars on different lines
 			println!();
 	                
-			let templated_string = templated(&config, &page);
+			let mut templated_string = templated(&config, &page);
+			//This is where plugins are run
+			templated_string = run_plugins(&config, &templated_string)?;
 			// let completed = replace(&templated_string, "{{date}}", &short_date);
 			match fs::write(&target, templated_string) {
 			    Ok(_) => (),
@@ -153,7 +152,7 @@ fn templated(config: &Config, page: &Page) -> String {
 	let mut template_file = String::from("default.html");
 	for header_var in &page.meta {
 	    if header_var.name == "template" {
-	        // if the marble meta header has a template value, sets `template_file` to that
+	        // if the granite meta header has a template value, sets `template_file` to that
 	        template_file = header_var.value.clone();
 	        template_file.push_str(".html");
 	    }
@@ -174,7 +173,7 @@ fn templated(config: &Config, page: &Page) -> String {
 
 	let template_lines: Vec<&str> = template_contents.as_str().lines().collect();
 
-	// figures out how indented the content marker is
+	// figures out how indented the content marker is (non-functional)
 	let mut whitespace = String::new();
 	for l in template_lines {
 		let line = l.to_string();
@@ -191,7 +190,7 @@ fn templated(config: &Config, page: &Page) -> String {
 
 struct Config {
     template_path: String,
-    marble_path: String,
+    granite_path: String,
     html_path: String,
     plugin_path: String,
     // music_path: String,
@@ -208,7 +207,7 @@ impl Config {
                 let default = 
                     "[paths]\n\
 	                template_path = \"templates/\"\n\
-	                marble_path = \"pages/\"\n\
+	                granite_path = \"pages/\"\n\
 	                html_path = \"docs/\"\n\
 	                plugin_path = \"plugins/\"\n\
 	                music_path = \"/home/user/Music/\"\n\
@@ -226,7 +225,7 @@ impl Config {
         let config = config_string.parse::<Value>().unwrap();
 
         let template_path = config["paths"]["template_path"].to_string();
-        let marble_path = config["paths"]["marble_path"].to_string();
+        let granite_path = config["paths"]["granite_path"].to_string();
         let html_path = config["paths"]["html_path"].to_string();
         let plugin_path = config["paths"]["plugin_path"].to_string();
         // let music_path = config["paths"]["music_path"].to_string();
@@ -237,7 +236,7 @@ impl Config {
 
         Some(Config {
             template_path: slice(&template_path, 1..len(&template_path)-1),
-            marble_path: slice(&marble_path, 1..len(&marble_path)-1),
+            granite_path: slice(&granite_path, 1..len(&granite_path)-1),
             html_path: slice(&html_path, 1..len(&html_path)-1),
             plugin_path: slice(&plugin_path, 1..len(&plugin_path)-1),
             // music_path: slice(&music_path, 1..len(&music_path)-1),
