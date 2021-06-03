@@ -250,13 +250,15 @@ pub mod granite {
 			    let mut input_string = String::new();
 
 			    loop {
-			    	println!("press enter to continue");
+			    	println!("press enter to continue, tab to skip debug of file");
 				    stdin().read_line(&mut input_string)
 				    	.ok()
 				        .expect("Failed to read line");
 					if input_string == "\n" {
 						break
-					} 		    	
+					} else if input_string == "\t" {
+						debug = false;
+					}
 			    }
 		    } else {
 				bar.print(i);
