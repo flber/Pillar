@@ -219,7 +219,7 @@ pub mod granite {
     	output.concat().to_string()
     }
 
-    fn parse(s: &String, debug: bool) -> String {		
+    fn parse(s: &String, mut debug: bool) -> String {		
     	let mut t = s.clone();
     	let mut elems = Vec::<String>::new();
     	let mut in_quotes = false;
