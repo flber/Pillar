@@ -274,7 +274,7 @@ pub mod granite {
 	  					in_quotes = true;
 	  				}
 				},
-				"[" => {
+				"[" | "]" => {
 					in_content = false;
 				},
 				// "|" => {
