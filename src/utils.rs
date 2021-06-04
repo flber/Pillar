@@ -293,7 +293,6 @@ pub mod granite {
 			}
 			
 			match char {
-				/*
 				"\"" => {
 	  				if in_quotes {
 	  					in_quotes = false;
@@ -317,11 +316,9 @@ pub mod granite {
 	  					in_quotes = true;
 	  				}
 				},
-				*/
 				"[" => {
 					in_content = false;
 				},
-				/*
 				"]" => {
 					if !in_quotes {
 	    				t = remove(&t, i, 1);
@@ -333,7 +330,6 @@ pub mod granite {
 	    				t = insert(&t, i, end_tag);
     				}
 				},
-				*/
 				_ => (),
 			}
     		
