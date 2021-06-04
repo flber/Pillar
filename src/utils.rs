@@ -59,6 +59,7 @@ pub mod granite {
     use std::str::FromStr;
     // uncomment for debug output
     use std::io::stdin;
+    use std::process::Command;
 
     pub struct Metadata {
         pub name: String,
@@ -219,6 +220,29 @@ pub mod granite {
     	output.concat().to_string()
     }
 
+    fn debug_input(bar: &Bar, i: usize, mut debug: bool, mut auto: bool) -> (bool, bool) {
+	    let mut input_string = String::new();
+	    if !auto { loop {
+		    stdin().read_line(&mut input_string)
+		    	.ok()
+		        .expect("Failed to read line");
+			if input_string == "\n" {
+				break
+			} else if input_string == "next\n" {
+				debug = false;
+				break
+			} else if input_string == "auto\n" {
+				auto = true;
+				break
+			}
+		    bar.print(i);
+	    }}
+	    // let mut child = Command::new("sleep").arg("0.05").spawn().unwrap();
+	    // let _result = child.wait().unwrap();
+
+	    return (debug, auto)
+    }
+
     fn parse(s: &String, mut debug: bool) -> String {		
     	let mut t = s.clone();
     	let mut elems = Vec::<String>::new();
@@ -237,51 +261,79 @@ pub mod granite {
 			bar_width, 
 			max: len(&s), 
 		};
-		
+
+		let mut auto = false;
 		let mut i = 0;
     	while i < len(&t) {
+    		let char = &slice(&t, i..i+1)[..];
     		if debug {
 	    		// Debugging output
 	    		print!("{esc}c", esc = 27 as char);
-	    		println!("{}@{}", slice(&t, 0..i), slice(&t, i+1..len(&t)));
-	    		println!("#################\nelems: {:#?}", elems);
+
+	    		let mut start = 0;
+	    		let view = 500;
+	    		if i > view { start = i - view; }
+	    		let mut end = len(&t);
+	    		if i < len(&t)-view { end = i + view; }
+	    		println!("...{}\x1b[31;1m@\x1b[0m{}...", slice(&t, start..i), slice(&t, i+1..end));
+
+	    		println!("#################");
+	    		println!("enter to continue, \"auto\" to speed up, \"next\" to skip");
+	    		println!("elems: {:#?}", elems);
 	    		println!("in_quotes: {}", in_quotes);
 	    		println!("in_content: {}", in_content);
-			    let mut input_string = String::new();
+	    		if char != "\n" { println!("char: {}", char); }
+	    		else { println!("char:"); }
 
-			    loop {
-			    	println!("press enter to continue, tab to skip debug of file");
-				    stdin().read_line(&mut input_string)
-				    	.ok()
-				        .expect("Failed to read line");
-					if input_string == "\n" {
-						break
-					} else if input_string == "\t" {
-						debug = false;
-					}
-			    }
+				let de_tuple: (bool, bool) = debug_input(&bar, i, debug, auto);
+				debug = de_tuple.0;
+				auto = de_tuple.1;
 		    } else {
 				bar.print(i);
 			}
 			
-    		let char = &slice(&t, i..i+1)[..];
-
 			match char {
+				/*
 				"\"" => {
 	  				if in_quotes {
 	  					in_quotes = false;
 	  					// a bit scuffed, but it prevents mark [A] from deleting the character before the closing quote.
 	  					i += 1;
+	  					// this is a bad way of doing it, but otherwise if there's a quote just before a close bracket, it'll skip the close bracket
+	  					let new_char = &slice(&t, i..i+1)[..];
+	  					match new_char {
+							"]" => {
+			    				t = remove(&t, i, 1);
+			    				let elem = match elems.pop() {
+			    					Some(e) => e,
+			    					None => String::from(""),
+			    				};
+			    				let end_tag = &format!("</{}>", elem);
+			    				t = insert(&t, i, end_tag);
+							},
+							_ => (),
+	  					}
 	  				} else if !in_quotes {
 	  					in_quotes = true;
 	  				}
 				},
-				"[" | "]" => {
+				*/
+				"[" => {
 					in_content = false;
 				},
-				// "|" => {
-					// if !in_content { in_content = true; }
-				// },
+				/*
+				"]" => {
+					if !in_quotes {
+	    				t = remove(&t, i, 1);
+	    				let elem = match elems.pop() {
+	    					Some(e) => e,
+	    					None => String::from(""),
+	    				};
+	    				let end_tag = &format!("</{}>", elem);
+	    				t = insert(&t, i, end_tag);
+    				}
+				},
+				*/
 				_ => (),
 			}
     		
