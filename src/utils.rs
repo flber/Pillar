@@ -59,7 +59,8 @@ pub mod granite {
     use std::str::FromStr;
     // uncomment for debug output
     use std::io::stdin;
-    use std::process::Command;
+    // uncomment for delay in auto debug
+    // use std::process::Command;
 
     pub struct Metadata {
         pub name: String,
@@ -269,15 +270,17 @@ pub mod granite {
     		let char = &slice(&t, i..i+1)[..];
     		if debug {
 	    		// Debugging output
+	    		// clears screen for new output
 	    		print!("{esc}c", esc = 27 as char);
 
+				// organizes and prints current status of string
 	    		let mut start = 0;
 	    		let view = 500;
 	    		if i > view { start = i - view; }
 	    		let mut end = len(&t);
 	    		if i < len(&t)-view { end = i + view; }
 	    		println!("...{}\x1b[31;1m@\x1b[0m{}...", slice(&t, start..i), slice(&t, i+1..end));
-
+				// misc variable output
 	    		println!("#################");
 	    		println!("enter to continue, \"auto\" to speed up, \"next\" to skip");
 	    		println!("elems: {:#?}", elems);
@@ -287,6 +290,7 @@ pub mod granite {
 	    		if char != "\n" { println!("char: {}", char); }
 	    		else { println!("char:"); }
 
+				// this just waits for user input
 				let de_tuple: (bool, bool) = debug_input(&bar, i, debug, auto);
 				debug = de_tuple.0;
 				auto = de_tuple.1;
@@ -320,6 +324,7 @@ pub mod granite {
 				},
 				"[" => {
 					if !in_quotes{
+						// checks if an open bracket ends with a | or a ]. If the latter, the block is invalid and should not be parsed
 						let mut j = i;
 						let valid = loop {
 							if j > len(&t) { break false; }
@@ -336,6 +341,7 @@ pub mod granite {
 					}
 				},
 				"]" => {
+					// replaces ] with proper tag, or ignores if it's an invalid block
 					if !in_quotes && invalid_blocks < 1 {
 	    				t = remove(&t, i, 1);
 	    				let elem = match elems.pop() {
@@ -345,11 +351,13 @@ pub mod granite {
 	    				let end_tag = &format!("</{}>", elem);
 	    				t = insert(&t, i, end_tag);
     				}
+    				// allows for nesting of invalid blocks (i.e. `[ hi [parser]]`)
     				if invalid_blocks > 0 { invalid_blocks -= 1;}
 				},
 				_ => (),
 			}
-    		
+
+    		// this is where the sane formatting happens, once everything has been cleared by the above section
     		if !in_quotes && !in_content { match char {
     			"[" => {
     				t = remove(&t, i, 1);
@@ -359,6 +367,7 @@ pub mod granite {
     				t = remove(&t, i+1, next);
     				
     				let mut j = i;
+    				// find the current element and adds it to the list for later closing
     				let elem = slice(&t, i+1..loop {
     					let check = slice(&t, j..j+1);
     					if check == "," || check == " " || check == "\n" || check == "|" {
@@ -378,6 +387,7 @@ pub mod granite {
     				t = insert(&t, i, end_tag);
     			}
     			_ => {
+    				// lookahead code, mostly for pretty formatting (removing spaces, : to =, etc)
     				let mut j = i;
     				let next = loop {
     					if j > len(&t) { break j; }
@@ -403,6 +413,7 @@ pub mod granite {
     					"," => {
     						t = remove(&t, next, 1);
     					},
+    					// gets rid of the previous space, but not the greatest way of doing things
     					"\"" => {
     						// [A]
     						t = remove(&t, next-1, 1);
