@@ -248,6 +248,7 @@ pub mod granite {
     	let mut elems = Vec::<String>::new();
     	let mut in_quotes = false;
     	let mut in_content = false;
+    	let mut invalid_blocks = 0;
 
 		let width = match terminal_size() {
 			Some(s) => s,
@@ -282,6 +283,7 @@ pub mod granite {
 	    		println!("elems: {:#?}", elems);
 	    		println!("in_quotes: {}", in_quotes);
 	    		println!("in_content: {}", in_content);
+	    		println!("invalid_blocks: {}", invalid_blocks);
 	    		if char != "\n" { println!("char: {}", char); }
 	    		else { println!("char:"); }
 
@@ -317,10 +319,24 @@ pub mod granite {
 	  				}
 				},
 				"[" => {
-					in_content = false;
+					if !in_quotes{
+						let mut j = i;
+						let valid = loop {
+							if j > len(&t) { break false; }
+							let test_char = &slice(&t, j..j+1)[..];
+							match test_char {
+								"|" => { break true; }
+								"]" => { break false; }
+								_ => (),
+							}
+							j += 1;
+						};
+						if valid { in_content = false; }
+						else { invalid_blocks += 1; }
+					}
 				},
 				"]" => {
-					if !in_quotes {
+					if !in_quotes && invalid_blocks < 1 {
 	    				t = remove(&t, i, 1);
 	    				let elem = match elems.pop() {
 	    					Some(e) => e,
@@ -329,6 +345,7 @@ pub mod granite {
 	    				let end_tag = &format!("</{}>", elem);
 	    				t = insert(&t, i, end_tag);
     				}
+    				if invalid_blocks > 0 { invalid_blocks -= 1;}
 				},
 				_ => (),
 			}
