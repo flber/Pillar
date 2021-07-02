@@ -5,6 +5,8 @@ use std::fs;
 use std::{fs::File, io::ErrorKind};
 use std::io::prelude::*;
 use std::process::{Command, Stdio};
+use std::os::unix::fs::MetadataExt;
+use std::time::SystemTime;
 use toml::Value;
 mod utils;
 use utils::granite::*;
@@ -70,41 +72,53 @@ fn main() -> std::io::Result<()> {
 			let path = format!("{:?}", entry.path());
 			let path_str = slice(&path, 1..len(&path) - 1);
 
-			// gets contents of granite file
-			let contents = fs::read_to_string(&path_str)
-			    .expect("Something went wrong reading a granite file");
+			let meta = fs::metadata(&path_str)?;
+			let modified = meta.mtime() as u64;
+			let created = meta.created().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+			
+			// doesn't re-build the file if it was modified before the last build
+			if modified > config.last_run {
+				// gets contents of granite file
+				let contents = fs::read_to_string(&path_str)
+				    .expect("Something went wrong reading a granite file");
 
-			// formats target string
-			let target = [
-			    config.html_path.clone(),
-			    slice(
-			        &path,
-			        len(&config.granite_path.to_string()) + 1..len(&path) - 3,
-			    ),
-			    String::from("html"),
-			].concat();
-			println!("+ {}", target);
+				// formats target string
+				let target = [
+				    config.html_path.clone(),
+				    slice(
+				        &path,
+				        len(&config.granite_path.to_string()) + 1..len(&path) - 3,
+				    ),
+				    String::from("html"),
+				].concat();
+				if created > config.last_run {
+					println!("+ {}", target);
+				} else {
+					println!("~ {}", target);
+				}
 
-			// replaces content
-			let page = if debug_active {
-				Page::new(&contents, true)
-			} else {
-				Page::new(&contents, false)
-			};
-			// makes progress bars on different lines
-			println!();
-	                
-			let mut templated_string = templated(&config, &page);
-			//This is where plugins are run
-			templated_string = run_plugins(&config, &templated_string)?;
-			// let completed = replace(&templated_string, "{{date}}", &short_date);
-			match fs::write(&target, templated_string) {
-			    Ok(_) => (),
-			    Err(e) => println!("failed to write to {}: {}", &target, e),
-			};
+				// replaces content
+				let page = if debug_active {
+					Page::new(&contents, true)
+				} else {
+					Page::new(&contents, false)
+				};
+				// makes progress bars on different lines
+				println!();
+		                
+				let mut templated_string = templated(&config, &page);
+				//This is where plugins are run
+				templated_string = run_plugins(&config, &templated_string)?;
+				// let completed = replace(&templated_string, "{{date}}", &short_date);
+				match fs::write(&target, templated_string) {
+				    Ok(_) => (),
+				    Err(e) => println!("failed to write to {}: {}", &target, e),
+				};
+			}
 		}
     }
 
+	Config::update_time();
     Ok(())
 }
 
@@ -195,6 +209,7 @@ struct Config {
     plugin_path: String,
     // music_path: String,
     // latest_length: usize,
+    last_run: u64,
 }
 
 impl Config {
@@ -204,7 +219,7 @@ impl Config {
                 File::create(".pillar.toml").unwrap_or_else(|create_error| {
                     panic!("Problem creating the file: {:?}", create_error);
                 });
-                let default = 
+                let default = format!(
                     "[paths]\n\
 	                template_path = \"templates/\"\n\
 	                granite_path = \"pages/\"\n\
@@ -213,7 +228,8 @@ impl Config {
 	                music_path = \"/home/user/Music/\"\n\
 	                \n\
 	                [values]\n\
-	                latest_length = 15";
+	                latest_length = 15\n\
+	                last_run = {}", SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs());
 				fs::write(".pillar.toml", default).unwrap();
 				File::open(".pillar.toml").unwrap()
             } else {
@@ -233,6 +249,10 @@ impl Config {
             // .to_string()
             // .parse::<usize>()
             // .unwrap();
+        let last_run = config["values"]["last_run"]
+            .to_string()
+            .parse::<u64>()
+            .unwrap();
 
         Some(Config {
             template_path: slice(&template_path, 1..len(&template_path)-1),
@@ -241,7 +261,24 @@ impl Config {
             plugin_path: slice(&plugin_path, 1..len(&plugin_path)-1),
             // music_path: slice(&music_path, 1..len(&music_path)-1),
             // latest_length,
+            last_run,
         })
+    }
+
+    fn update_time() {
+	    let config_str = &fs::read_to_string(".pillar.toml").unwrap();
+		let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+
+		let mut config_string = String::new();
+		for line in config_str.lines() {
+			if slice(&line.to_string(), 0..8) == "last_run" {
+				config_string.push_str(&format!("last_run = {}\n", now));
+			} else {
+				config_string.push_str(&format!("{}\n", line));
+			}
+		}
+		
+		fs::write(".pillar.toml", config_string).unwrap();
     }
 }
 

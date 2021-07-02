@@ -2,27 +2,26 @@
 title: Example
 !meta!
 
+[h1|This is a header]
 
-[ h1 | This is a header ]
+[p|And this is a paragraph of text. Woah, semicolon:]
 
-[ p | And this is a paragraph of text. Woah, semicolon:]
-
-[ ul |
-	[ li | item 1 ]
-	[ li | item 2 ]
-	[ ul |
-		[ li | an indented item ]
+[ul|
+	[li|item 1]
+	[li|item 2]
+	[ul|
+		[li|an indented item]
 	]
 ]
 
-[ details |
-	[ summary | click me for a code demo ]
-	[ img, src: "dio.webp", alt: "YOU THOUGHT IT WAS A CODE DEMO, BUT IT WAS ME, DIO!" loading: "lazy" | ]
+[details|
+	[summary|click me for a code demo]
+	[img, src: "dio.webp", alt: "YOU THOUGHT IT WAS A CODE DEMO, BUT IT WAS ME, DIO!" loading: "lazy"|]
 ]
 
-[ a, href: "1234567890" | this is a link ]
+[a, href: "1234567890"|this is a link]
 
-[p| {{date}} <- this is the date ]
+[p|{{date}} <- this is the date]
 
-[p| latest pages]
+[p|latest pages]
 {{latest}}
