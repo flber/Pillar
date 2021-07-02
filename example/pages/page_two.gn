@@ -1,0 +1,10 @@
+!meta!
+title: Page Two
+!meta!
+
+
+[h1|Another page, for testing purposes]
+
+[p|Hello. This is a paragraph. Below is the date this file was last updated.]
+
+[p|{{date}} <- this is the date]
