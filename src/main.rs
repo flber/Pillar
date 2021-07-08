@@ -108,7 +108,7 @@ fn main() -> std::io::Result<()> {
 		                
 				let mut templated_string = templated(&config, &page);
 				//This is where plugins are run
-				templated_string = run_plugins(&config, &templated_string)?;
+				templated_string = run_plugins(&config, &path_str, &templated_string)?;
 				// let completed = replace(&templated_string, "{{date}}", &short_date);
 				match fs::write(&target, templated_string) {
 				    Ok(_) => (),
@@ -122,8 +122,8 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn run_plugins(config: &Config, contents: &String) -> std::io::Result<String> {
-	let mut output = contents.clone();
+fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::Result<String> {
+	let mut output = [path_str, "\n", contents.clone().as_str()].concat().to_string();
 	
 	for e in fs::read_dir(&config.plugin_path)? {
 		let entry = e?;
@@ -219,7 +219,7 @@ impl Config {
                 File::create(".pillar.toml").unwrap_or_else(|create_error| {
                     panic!("Problem creating the file: {:?}", create_error);
                 });
-                let default = format!(
+                let default = 
                     "[paths]\n\
 	                template_path = \"templates/\"\n\
 	                granite_path = \"pages/\"\n\
@@ -229,7 +229,7 @@ impl Config {
 	                \n\
 	                [values]\n\
 	                latest_length = 15\n\
-	                last_run = {}", SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs());
+	                last_run = 0";
 				fs::write(".pillar.toml", default).unwrap();
 				File::open(".pillar.toml").unwrap()
             } else {
