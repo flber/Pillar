@@ -77,7 +77,7 @@ fn main() -> std::io::Result<()> {
 			let created = meta.created().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
 			
 			// doesn't re-build the file if it was modified before the last build
-			if modified > config.last_run {
+			if modified > config.last_run && !debug_active {
 				// gets contents of granite file
 				let contents = fs::read_to_string(&path_str)
 				    .expect("Something went wrong reading a granite file");
