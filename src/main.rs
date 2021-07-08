@@ -155,7 +155,15 @@ fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::R
 	    output = s;
 
 	}
-	return Ok(output);
+	let mut final_string = String::new();
+	for i in 0..len(&output) {
+		let char = &slice(&output, i..i+1);
+		if char == "\n" {
+			final_string = slice(&output, i+1..len(&output));
+			break;
+		}
+	}
+	return Ok(final_string);
 }
 
 /*
