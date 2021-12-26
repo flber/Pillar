@@ -1,0 +1,42 @@
+#!/bin/python
+
+import os
+import sys
+import datetime
+
+def gen_rss():
+	xml = """<feed xmlns="http://www.w3.org/2005/Atom">
+    <title>Mineral Existence</title>
+    <subtitle>New articles... occasionally</subtitle>
+    <link href="https://mineralexistence.com/feed.xml" rel="self"/>
+    <link href="https://mineralexistence.com/"/>
+    <updated>"""
+	
+	file = open(".pillar.toml").readlines()
+	for lines in file:
+	    k = lines.split()
+	    if len(k) > 0 and k[0] == "last_run":
+	        last_run = k[2]
+	        xml += str(datetime.datetime.fromtimestamp(int(last_run)).isoformat())
+	
+	xml += """</updated>
+    <id>https://mineralexistence.com/</id>
+    <author>
+    	<name>flbr</name>
+    	<email>benrhammond@gmail.com</email>
+    </author>\n"""
+
+	# add entries here
+
+	xml += """</feed>"""
+	
+	f = open("docs/feed.xml", "w")
+	f.write(xml)
+	f.close()
+
+
+for index, line in enumerate(sys.stdin):
+    if "{{rss}}" in line:
+    	gen_rss()
+    else:
+        sys.stdout.write(line)

@@ -63,9 +63,13 @@ As you can see, the Granite syntax is very similar to html, but is in my mind a 
 
 Pillar supports extensions in the form of executable scripts in your defined plugins folder. These work by receiving each parsed page, in html, through stdin. The script should then return a modified form of the page in its stdout. There are three extensions in the example folder, which replace the following tags:
 - `{{date}}` replaces with the date the content was last modified (the granite, not the html itself)
-- `{{music}}` replaces with an unordered list of your album directory names in a designated music path
+- `{{feed}}` is an experimental rss feed generator which doesn't work right now
+- `{{files}}` gives a list of files in a `/files` directory
 - `{{latest}}` replaces with a given number of the latest updated pages in an unordered list
+- `{{music}}` replaces with an unordered list of your album directory names in a designated music path
+- `{{stats}}` just gives a list of orphaned pages (the algorithm is not super complete, and may not be entirely accurate)
+- `{{title}}` is mostly for the html templates to get the title of a page based on its first h2 tag
 
 ## Syntax Highlighting
 
-If you use the [micro text editor](https://github.com/zyedidia/micro), I wrote a syntax highlighting file which works nicely with Granite files which you can find in the `examples` folder. Just put it into your `.config/micro/syntax/` directory, and you should get decent syntax highlighting.
+If you use the [micro text editor](https://github.com/zyedidia/micro), I wrote a syntax highlighting file which works nicely with Granite files which you can find in the `examples` folder (or on my website here: `https://mineralexistence.com/files/micro/micro-granite.yaml`). Just put it into your `.config/micro/syntax/` directory, and you should get decent syntax highlighting.
