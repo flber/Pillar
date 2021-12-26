@@ -1,0 +1,55 @@
+#!/bin/python
+
+import os
+import re
+import sys
+import glob
+import time
+from pathlib import Path
+
+# os.chdir('..')
+file = open(".pillar.toml").readlines()
+for lines in file:
+	k = lines.split()
+	if len(k) > 0 and k[0] == "granite_path":
+		granite_path = k[2]
+
+for index, line in enumerate(sys.stdin):
+	if "{{stats}}" in line:
+		stats = "<h3>Orphans:</h3>\n<ul>\n"
+
+		abspath = os.path.abspath(granite_path[1:-1])
+		files = glob.glob(abspath + "/*.gn")
+
+		orphans = []
+		for file in files:
+			orphans.append(file[29:-3] + ".html")
+		remove = ["index.html", "home.html", "wiki.html", "now.html", "about.html"]
+		orphans = [i for i in orphans if i not in remove]
+
+		for file in files:
+			name = file[29:-3]
+			page = Path(file).read_text()
+			links = re.findall( r'\[a, href: "([^"]+)"\|', page)
+			links = list(filter(lambda x : '/' not in x and ':' not in x, links))
+			orphans = [i for i in orphans if i not in links]
+
+		for orphan in orphans:
+			title = "~default~"
+			file = "/home/benh/projects/mx/pages/" + orphan
+			file = file.replace(".html", ".gn")
+			page = open(file).readlines()
+			for p_line in page:
+				if 'title:' in p_line:
+					title = p_line[7:-1]
+
+			stats += "\t<li><a href=\""
+			stats += \
+			orphan + \
+			"\">" + \
+			title + \
+			"</a></li>\n"
+		
+		stats += "</ul>"
+		line = line.replace("{{stats}}", stats)
+	sys.stdout.write(line)

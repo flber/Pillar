@@ -3,27 +3,42 @@
 import os
 import sys
 import glob
+import time
 
-os.chdir('..')
+# os.chdir('..')
 file = open(".pillar.toml").readlines()
 for lines in file:
     k = lines.split()
-    if len(k) > 0 and k[0] == "marble_path":
-        marble_path = k[2]
+    if len(k) > 0 and k[0] == "granite_path":
+        granite_path = k[2]
 
-for line in sys.stdin:
+for index, line in enumerate(sys.stdin):
     if "{{latest}}" in line:
         latest = "<ul>\n"
-        abspath = os.path.abspath(marble_path[1:-1])
-        files = glob.glob(abspath + "/*.mr")
+        abspath = os.path.abspath(granite_path[1:-1])
+        files = glob.glob(abspath + "/*.gn")
         files.sort(key=os.path.getmtime, reverse=True)
+        
         for file in files:
             title = "~default~"
             page = open(file).readlines()
             for p_line in page:
                 if "title:" in p_line:
                     title = p_line[7:-1]
-            latest += "\t<li> " + title + " </li>\n"
+            
+            latest += \
+            "\t<li>" + \
+            time.strftime("%d%m%y", time.gmtime(os.path.getmtime(file[len(abspath)-len(granite_path)+3:]))) + \
+            " - <a href=\""
+
+            file = file.replace(".gn", ".html")
+            
+            latest += \
+            file[len(abspath)+1:] + \
+            "\">" + \
+            title + \
+            "</a></li>\n"
+            
         latest += "</ul>"
         line = line.replace("{{latest}}", latest)
     sys.stdout.write(line)

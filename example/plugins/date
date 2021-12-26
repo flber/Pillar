@@ -1,12 +1,16 @@
 #!/bin/python
 
+import os
 import sys
-from datetime import date
+import time
 
-today = date.today()
+path = ".pillar.toml" # default, it'll always be there
 
-for line in sys.stdin:
-	if "{{date}}" in line:
-		line = line.replace("{{date}}", today.strftime("%d%m%y"))
-	
-	sys.stdout.write(line)
+for index, line in enumerate(sys.stdin):
+    if index < 1:
+        path = line[:-1]
+        sys.stdout.write(line)
+    else:
+    	if "{{date}}" in line:
+    		line = line.replace("{{date}}", time.strftime("%d%m%y", time.gmtime(os.path.getmtime(path))))
+    	sys.stdout.write(line)
