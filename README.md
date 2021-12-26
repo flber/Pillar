@@ -51,6 +51,7 @@ As you can see, the Granite syntax is very similar to html, but is in my mind a 
 - variables are declared with the `name: value` pattern (it's not too particular about whitespace)
 - the `title` variable is used to set the title (used for the `{{latest}}` substitution)
 - the `template` variable sets the template for the page, defaulting to `default`, where the value is the file name (without extension) of a template in the given template directory
+
 Example:
 ```
 !meta!
