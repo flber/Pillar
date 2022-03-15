@@ -278,7 +278,7 @@ pub mod granite {
 	    		let view = 500;
 	    		if i > view { start = i - view; }
 	    		let mut end = len(&t);
-	    		if i < len(&t)-view { end = i + view; }
+	    		if len(&t) >= view && i < len(&t)-view { end = i + view; }
 	    		println!("...{}\x1b[31;1m@\x1b[0m{}...", slice(&t, start..i), slice(&t, i+1..end));
 				// misc variable output
 	    		println!("#################");
