@@ -61,6 +61,7 @@ pub mod granite {
     use std::io::stdin;
     // uncomment for delay in auto debug
     // use std::process::Command;
+    // use regex::Regex;
 
     pub struct Metadata {
         pub name: String,
@@ -244,6 +245,59 @@ pub mod granite {
 	    return (debug, auto)
     }
 
+	// prints debug information to terminal
+	// t, elems, in_quotes, in_content, invalid_blocks, i, char, bar, debug, auto
+    fn debug_output(t: &String, elems: Vec::<String>, in_quotes: bool, in_content: bool, invalid_blocks: usize, i: usize, char: &str, bar: &Bar, mut debug: bool, mut auto: bool) -> (bool, bool) {
+		// Debugging output
+		// clears screen for new output
+		print!("{esc}c", esc = 27 as char);
+
+		// organizes and prints current status of string
+		let mut start = 0;
+		let view = 500;
+		if i > view { start = i - view; }
+		let mut end = len(&t);
+		if len(&t) >= view && i < len(&t)-view { end = i + view; }
+		println!("...{}\x1b[31;1m@\x1b[0m{}...", slice(&t, start..i), slice(&t, i+1..end));
+		// misc variable output
+		println!("#################");
+		println!("enter to continue, \"auto\" to speed up, \"next\" to skip");
+		println!("elems: {:#?}", elems);
+		println!("in_quotes: {}", in_quotes);
+		println!("in_content: {}", in_content);
+		println!("invalid_blocks: {}", invalid_blocks);
+		if char != "\n" { println!("char: {}", char); }
+		else { println!("char:"); }
+
+		// this just waits for user input
+		let de_tuple: (bool, bool) = debug_input(bar, i, debug, auto);
+		debug = de_tuple.0;
+		auto = de_tuple.1;
+
+		(debug, auto)
+    }
+
+	/* this is an example implementation of efficient text replacement
+	pub fn find(input: &str) -> String {
+	    lazy_static! {
+	        static ref REGEX: Regex = Regex::new("[<>&]").unwrap();
+	    }
+	    let first = REGEX.find(&input).unwrap();
+        let mut output = String::from(&input[0..first]);
+        output.reserve(input.len() - first);
+        let rest = input[first..].chars();
+        for c in rest {
+            match c {
+                '<' => output.push_str("&lt;"),
+                '>' => output.push_str("&gt;"),
+                '&' => output.push_str("&amp;"),
+                _ => output.push(c),
+            }
+        }
+        output
+	}
+	*/
+
     fn parse(s: &String, mut debug: bool) -> String {		
     	let mut t = s.clone();
     	let mut elems = Vec::<String>::new();
@@ -269,31 +323,13 @@ pub mod granite {
     	while i < len(&t) {
     		let char = &slice(&t, i..i+1)[..];
     		if debug {
-	    		// Debugging output
-	    		// clears screen for new output
-	    		print!("{esc}c", esc = 27 as char);
-
-				// organizes and prints current status of string
-	    		let mut start = 0;
-	    		let view = 500;
-	    		if i > view { start = i - view; }
-	    		let mut end = len(&t);
-	    		if len(&t) >= view && i < len(&t)-view { end = i + view; }
-	    		println!("...{}\x1b[31;1m@\x1b[0m{}...", slice(&t, start..i), slice(&t, i+1..end));
-				// misc variable output
-	    		println!("#################");
-	    		println!("enter to continue, \"auto\" to speed up, \"next\" to skip");
-	    		println!("elems: {:#?}", elems);
-	    		println!("in_quotes: {}", in_quotes);
-	    		println!("in_content: {}", in_content);
-	    		println!("invalid_blocks: {}", invalid_blocks);
-	    		if char != "\n" { println!("char: {}", char); }
-	    		else { println!("char:"); }
-
-				// this just waits for user input
-				let de_tuple: (bool, bool) = debug_input(&bar, i, debug, auto);
-				debug = de_tuple.0;
-				auto = de_tuple.1;
+    			match debug_output(&t, elems.clone(), in_quotes, in_content, invalid_blocks, i, char, &bar, debug, auto) {
+    				(d, a) => {
+    					debug = d;
+    					auto = a;
+    				},
+    				// _ => ()
+    			}
 		    } else {
 				bar.print(i);
 			}
