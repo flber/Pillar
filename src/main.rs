@@ -11,6 +11,9 @@ use toml::Value;
 mod utils;
 use utils::granite::*;
 use utils::text::*;
+// #[macro_use]
+// extern crate lazy_static;
+
 
 const HELP_MENU: &str = "Builds static site from granite files \n\nUSAGE: \n\tpillar [OPTIONS] [COMMAND] \n\nOPTIONS: \n\t-h\tprints this information \n\t-V\tprints current version \n\nCOMMANDS: \n\tbuild\tbuilds html from granite \n\tclean\tclears html directory \n";
 
@@ -75,12 +78,20 @@ fn main() -> std::io::Result<()> {
 			let meta = fs::metadata(&path_str)?;
 			let modified = meta.mtime() as u64;
 			let created = meta.created().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+
+			let mut static_build = false;
+			let contents = fs::read_to_string(&path_str)
+			    .expect("Something went wrong reading a granite file");
+			let page_vars = parse_header(&contents).meta;
+			for pvar in page_vars {
+				if pvar.name == "static" {
+					static_build = true;
+				}
+			}
 			
 			// doesn't re-build the file if it was modified before the last build
-			if modified > config.last_run {
+			if (modified > config.last_run) | static_build {
 				// gets contents of granite file
-				let contents = fs::read_to_string(&path_str)
-				    .expect("Something went wrong reading a granite file");
 
 				// formats target string
 				let target = [
