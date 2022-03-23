@@ -12,9 +12,10 @@ pub mod progress {
 		pub fn print(&self, i: usize) {
 			let inverse = 1.0 / (i as f32 / self.max as f32);
 			let progress = (self.bar_width as f32 / inverse) as usize;
+			let percent = if (100.0/inverse).ceil() > 100.0 { 100.0 } else { (100.0/inverse).ceil() };
 		
 			if self.bar_width >= progress { print!("\r{:#left$}{} [{:=>mid$}{:->right$}", 
-				(100.0/inverse).ceil(),
+				percent,
 				" ", ">", "]", 
 				left = self.left_pad, 
 				mid = progress,
