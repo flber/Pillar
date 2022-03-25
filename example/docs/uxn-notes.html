@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Example</title>
+		<link rel="stylesheet" href="style.css"/>
+	</head>
+	<body>
+		<nav>
+			<hr>
+		</nav>
+		<article class="inner">
+
+<h2>Uxn Notes</h2>
+
+<p><a href="https://wiki.xxiivv.com/site/uxn.html">Uxn</a> is an 8-bit virtual stack machine, created by <a href="https://wiki.xxiivv.com/site/devine_lu_linvega.html">Devine</a>, and programmed in a unique flavor of assembly.</p>
+
+<p>I have a <a href="files/uxn-zine.pdf">small zine design</a> of Rostiger's <a href="https://nchrs.xyz/site/uxn_notes.html">adorable uxn notes</a>, which you can learn how to fold <a href="https://en.wikibooks.org/wiki/Zine_Making/Putting_pages_together#An_8-sided_zine_from_1_sheet_with_1_cut">here</a>. It turned out alright, and I'll probably be making some small improvements to it soon!</p>
+
+<p>You can now download the zine as a latex project! It's a neat template which you can use in any other 16-page zine you want, and what's nice is all you'd need to change are the images referenced the <a href="files/uxn-zine/source.tex">source.tex</a> file. You can download the compressed project file <a href="files/uxn-zine.tar.gz">here</a>, or go to the <a href="files.html">files</a> page and download the tex and image files individually :3</p>
+
+<details>
+	<summary>Opcodes</summary>
+	<table border="1"> <tbody>
+		<tr> <th colspan="5"><strong>Stack</strong></th> </tr>
+		<tr> <td>0x00</td>	<td>BRK</td>	<td>break</td>		<td></td>		<td></td>		</tr>
+		<tr> <td>0x01</td>	<td>LIT</td>	<td>literal</td>	<td>++</td>		<td></td>		</tr>
+		<tr> <td>0x02</td>	<td>---</td>	<td></td>			<td></td>		<td></td>		</tr>
+		<tr> <td>0x03</td>	<td>POP</td>	<td>pop</td>		<td>a</td>		<td></td>		</tr>
+		<tr> <td>0x04</td>	<td>DUP</td>	<td>duplicate</td>	<td>a</td>		<td>a a</td>	</tr>
+		<tr> <td>0x05</td>	<td>SWP</td>	<td>swap</td>		<td>a b</td>	<td>b a</td>	</tr>
+		<tr> <td>0x06</td>	<td>OVR</td>	<td>over</td>		<td>a b</td>	<td>a b a</td>	</tr>
+		<tr> <td>0x07</td>	<td>ROT</td>	<td>rotate</td>		<td>a b c</td>	<td>b c a</td>	</tr>
+	</tbody></table>
+	
+	<table border="1"> <tbody>
+		<tr> <th colspan="5"><strong>Logic</strong></th> </tr>
+		<tr> <td>0x08</td>	<td>EQU</td>	<td>equal</td>				<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x09</td>	<td>NEQ</td>	<td>not equal</td>			<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x0a</td>	<td>GTH</td>	<td>greater than</td>		<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x0b</td>	<td>LTH</td>	<td>less than</td>			<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x0c</td>	<td>JMP</td>	<td>jump</td>				<td>{a}</td>	<td></td>	</tr>
+		<tr> <td>0x0d</td>	<td>JCN</td>	<td>jump conditional</td>	<td>a {b}</td>	<td></td>	</tr>
+		<tr> <td>0x0e</td>	<td>JSR</td>	<td>jump stash</td>			<td>{a}</td>	<td>rs</td>	</tr>
+		<tr> <td>0x0f</td>	<td>STH</td>	<td>stash</td>				<td>a</td>		<td>rs</td>	</tr>
+	</tbody></table>
+
+	<table border="1"> <tbody>
+		<tr> <th colspan="5"><strong>Memory</strong></th> </tr>
+		<tr> <td>0x10</td>	<td>LDZ</td>	<td>load zero page</td>		<td>a</td>		<td>{b}</td>	</tr>
+		<tr> <td>0x11</td>	<td>STZ</td>	<td>store zero page</td>	<td>a b</td>	<td></td>		</tr>
+		<tr> <td>0x12</td>	<td>LDR</td>	<td>load relative</td>		<td>a</td>		<td>{b}</td>	</tr>
+		<tr> <td>0x13</td>	<td>STR</td>	<td>store relative</td>		<td>{b} a</td>	<td></td>		</tr>
+		<tr> <td>0x14</td>	<td>LDA</td>	<td>load absolute</td>		<td>a*</td>		<td>{b}</td>	</tr>
+		<tr> <td>0x15</td>	<td>STA</td>	<td>store absolute</td>		<td>{b} a*</td>	<td></td>		</tr>
+		<tr> <td>0x16</td>	<td>DEI</td>	<td>device in</td>			<td>a</td>		<td>{b}</td>	</tr>
+		<tr> <td>0x17</td>	<td>DEO</td>	<td>device out</td>			<td>{b} a</td>	<td>rs</td>		</tr>
+	</tbody></table>
+
+	<table border="1"> <tbody>
+		<tr> <th colspan="5"><strong>Arithmetic</strong></th> </tr>
+		<tr> <td>0x18</td>	<td>ADD</td>	<td>add</td>			<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x19</td>	<td>SUB</td>	<td>subtract</td>		<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x1a</td>	<td>MUL</td>	<td>multiply</td>		<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x1b</td>	<td>DIV</td>	<td>divide</td>			<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x1c</td>	<td>AND</td>	<td>and</td>			<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x1d</td>	<td>ORA</td>	<td>or</td>				<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x1e</td>	<td>EOR</td>	<td>exclusive or</td>	<td>a b</td>	<td>c</td>	</tr>
+		<tr> <td>0x1f</td>	<td>SFT</td>	<td>shift</td>			<td>a b</td>	<td>c</td>	</tr>
+	</tbody></table>
+</details>
+
+<details>
+	<summary>Modes</summary>
+	<p><strong>Keep mode:</strong> lets operators work without consuming items from the stack. Results are simply pushed to the top.</p>
+	<p><strong>Short mode:</strong> allows operators to operate on 2-byte data, pushing and popping extra byte from the stack. With jump opcodes, short mode jumps to absolute memory addresses.</p>
+	<p><strong>Return mode:</strong> sets opcodes to operate on the return stack. Certain opcodes, such as STH, already operate on the stack, so applying the return mode to those opcodes let them operate on the working stack.</p>
+</details>
+
+<details>
+	<summary>Runes</summary>
+	<table border="1"> <tbody>
+		<tr> <td>%</td>			<td>macro-define</td>				</tr>
+		<tr> <td>|</td>			<td>pad absolute</td>				</tr>
+		<tr> <td>$</td>			<td>pad relative</td>				</tr>
+		<tr> <td>@</td>			<td>label-define</td>				</tr>
+		<tr> <td>&</td>			<td>sublabel-define</td>			</tr>
+		<tr> <td>/</td>			<td>sublabel spacer</td>			</tr>
+		<tr> <td>#</td>			<td>literal hex</td>				</tr>
+		<tr> <td>.</td>			<td>literal addr (zero page)</td>	</tr>
+		<tr> <td>,</td>			<td>literal addr (relative)</td>	</tr>
+		<tr> <td>;</td>			<td>literal addr (absolute)</td>	</tr>
+		<tr> <td>:</td>			<td>raw addr</td>					</tr>
+		<tr> <td>'</td>			<td>raw char</td>					</tr>
+		<tr> <td>{quote}</td>	<td>raw word</td>					</tr>
+	</tbody></table>
+</details>
+
+<div class="break"></div>
+
+<h3>Hello world, part 2!</h3>
+
+<pre>
+( dev/console )
+
+|10 @Console [ &pad $8 &char ]
+
+( init )
+
+|0100 ( -> )
+	
+	;hello-word 
+
+	&loop
+		( send ) LDAk .Console/char DEO
+		( incr ) #0001 ADD2
+		( loop ) LDAk ,&loop JCN
+	POP2
+	
+BRK
+
+@hello-word "Hello 20 "World!
+</pre>
+
+<p>This is the new version of hello world (as of commit ea0584a2), which is significantly more concise, and uses some of the new opcodes. If you want an example which is a bit longer, I'd recommend checking out the first breakdown.</p>
+
+<p>The couple of lines are the same as they were before, so I won't go over them again.</p>
+
+<p>To start, everything happens in one space, and isn't broken up between functions. The general overview of how the program works is the same as the older version; the newer version is just a bit more concise.</p>
+
+<p>Once again, let's go through this line by line, starting at line 9.</p>
+
+<pre>
+;hello-world
+└──────────┘
+      A
+</pre>
+
+<p>This one's pretty simple (though it may look weird if you're not quite familiar with uxn's concepts yet). The semicolon tells the cpu to use absolute addresses, and in this case the address it's referring to is the `@hello-world` label. That absolute address is added to the stack, and the program continues to line 11.</p>
+
+<pre>
+&loop 
+└───┘ 
+  A
+</pre>
+
+<p>This one is also super short; part A just creates a sublabel called `loop` for later use.</p>
+
+<pre>
+( send ) LDAk .Console/char DEO
+└──────┘ └──┘ └───────────────┘
+   A      B           C
+</pre>
+
+<p>Part A is just a comment, but part B is where we see a new opcode! `LDA` takes an absolute address and adds the value at that address to the stack. Here it's used with the keep mode, so it doesn't consume that address (which points to the start of our `"hello 20 "world`) text. With the character at that address now on the top of the stack, part C takes that value and prints it to the console.</p>
+
+<pre>
+( incr ) #0001 ADD2
+└──────┘ └────────┘
+   A         B
+</pre>
+
+<p>Part B, as the comment says, just increments our address, which is now at the top of the stack. The address on the stack now points to the next character of the text.</p>
+
+<pre>
+( loop ) LDAk ,&loop JCN
+└──────┘ └──┘ └────────┘
+   A      B       C
+</pre>
+
+<p>Part B is the same thing as used before, it gets the value at the address, keeps the address on the stack, and adds the value to the top of the stack. This value is then used by part C, which passes two arguments, (that value, and the relative address of the `loop` sublabel which was defined earlier) to the `JCN` opcode. `JCN` takes a boolean value and an address, and if the boolean is true (not a zero), it jumps to that address. Here, it looks at that value, which is normally a character, and repeats. However, if the address has been incremented past where we have characters, the value will be #00 (I think, but the point is it's a zero), and the loop stops.</p>
+
+<p>The final opcode, `POP2`, removes the top two-byte item on the stack, which is our address. With everything done and "hello world" printed to the console, we break.</p>
+
+<h3>Breakdown of Hello world</h3>
+
+<pre>
+( dev/console )
+
+%RTN { JMP2r }
+
+( devices )
+
+|10 @Console    [ &pad $8 &char $1 ]
+
+( init )
+
+|0100 ( -> )
+	
+	;hello-world ;print JSR2
+	
+BRK
+
+@print ( addr -- )
+	
+	&loop
+		( send ) DUP2 GET .Console/char DEO
+		( incr ) #0001 ADD2
+		( loop ) DUP2 GET #00 NEQ ,&loop JNZ
+	POP2
+
+RTN
+
+@hello-world [ "Hello 20 "World! ]
+</pre>
+
+<p>In uxn, everything is a stack of data. This often means that commands seem backward, as data is added to that stack before operations can use it.</p>
+
+<p>The second line (`%RTN { JMP2r }`) simply declares a macro labeled "RTN" which returns the two bytes at the top of the stack.</p>
+
+<p>The next line is very interesting, and definitely confused me for a while!</p>
+
+<pre>
+|10 @Console    [ &pad $8 &char $1 ]
+└──────────┘      └─────┘ └──────┘
+      A              B       C
+</pre>
+
+<p>Part A starts the line by making sense. It defines a label: "Console", which is an address to the console device (at 0110). </p>
+<p>Part B is where things start to get a bit confusing, and where Devine's [devices](https://wiki.xxiivv.com/site/uxnemu.html) table is very helpful. The first part, `&pad`, defines a sublabel (of `Console`), which is assigned by the `$8` part to an address one byte further than the `Console` address. If you look at the previously mentioned table, you'll see that this puts us right up to the output section of the console's memory space. This sublabel is never actually called.</p>
+<p>Part C then uses the same method as part B to assign the sublabel `char` to one bit past the `pad` label, which is the start of the "char" section of the console device!</p>
+
+<p>The main part of the program starts with the line "|0100 ( -> )", which moves us into the "system" device's memory space.</p>
+
+<pre>
+;hello-world ;print JSR2
+└──────────┘ └────┘ └──┘
+      A        B     C
+</pre>
+
+<p>Part A gets the address of the `hello-world` label and adds to the top of the stack. Part B then gets the address of the `print` label and pushes that to the stack, moving the first label down (really down four bytes, because each label is two bytes). The `JSR` opcode jumps the program to an address popped from the top of the stack, and the `2` modifier tells it to use two byte addresses. Because the top address is to `print`, we now move there.</p>
+
+<p>The main part of the `print` section is in the `( send )` line, where the program outputs to the terminal.</p>
+
+<pre>
+( send ) DUP2 GET .Console/char DEO
+└──────┘ └──┘ └─┘ └───────────┘ └─┘
+   A      B    C        D        E
+</pre>
+
+<p>Part A is just a comment.</p>
+<p>Part B duplicates the top two bytes of the stack, which here is the address to the `print` section. </p>
+<p>Part C consumes and adds the top item to the stack, which is that address to `print`</p>
+<p>Part D adds the device address for the console's char byte to the stack.</p>
+<p>Part E consumes both the device address and the address of the `print` label, which is essentially the first byte of the `"hello 20 "world` string. </p>
+
+<p>The next two lines make a bit more sense, but can be a bit unintuitive if you aren't used to working with memory address (like I am).</p>
+
+<pre>
+( incr ) #0001 ADD2
+</pre>
+
+<p>This is relatively straight-forward, it adds one byte to the item at the top of the stack, which is... the `print` address! Thus, the program now has an address on the top of the stack which points to the second byte in the `"hello 20 "world` string.</p>
+
+<p>While a bit scary, I promise this next line isn't too complicated!</p>
+
+<pre>
+( loop ) DUP2 GET #00 NEQ ,&loop JNZ
+         └──────┘ └─────┘ └────────┘
+            A        B         C
+</pre>
+
+<p>At part A we duplicate and `GET` the two bytes at the top of the stack (remember, that's now the address to the nex
+		</article>
+		<footer>
+			<hr>
+			<em>Last updated: 250322</em>
+		</footer>
+	</body>
+</html>
+
