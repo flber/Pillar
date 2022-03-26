@@ -596,8 +596,8 @@ pub mod text {
   */
   pub fn insert(s: &String, idx: usize, ins: &str) -> String {
     assert!(idx <= len(&s), "the index was larger than the target slice");
-    let insert_len = len(&ins.to_string()) - 1;
-    let final_len = len(&s) + insert_len - 1;
+    let insert_len = len(&ins.to_string());
+    let final_len = len(&s) + insert_len;
     let mut r = String::with_capacity(final_len);
     /*
     for i in 0..final_len {
