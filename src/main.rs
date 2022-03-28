@@ -8,6 +8,7 @@ use std::process::{Command, Stdio};
 use std::time::SystemTime;
 use std::{fs::File, io::ErrorKind};
 use toml::Value;
+mod tests;
 mod utils;
 use utils::granite::*;
 use utils::text::*;
