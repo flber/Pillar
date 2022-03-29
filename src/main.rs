@@ -37,6 +37,7 @@ fn usage() {
 fn main() -> std::io::Result<()> {
   // flags to define program behaviour
   let mut should_build = false;
+  let mut build_all = false;
   let mut debug_active = false;
 
   let args: Vec<String> = env::args().collect();
@@ -61,6 +62,7 @@ fn main() -> std::io::Result<()> {
         should_build = true;
         match opt.as_str() {
           "--debug" => debug_active = true,
+          "--all" => build_all = true,
           _ => (),
         }
       }
@@ -104,7 +106,7 @@ fn main() -> std::io::Result<()> {
       }
 
       // re-builds the file if it was modified after the last build, or if it's a static page
-      if (modified > config.last_run) | static_build {
+      if (modified > config.last_run) | static_build | build_all {
         // formats target string to look like html_path/file.html
         let target = [
           config.html_path.clone(),

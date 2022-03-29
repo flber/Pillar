@@ -592,35 +592,6 @@ pub mod text {
   }
 
   /*
-  inserts str into string, preserving graphemes
-  */
-  pub fn insert(s: &String, idx: usize, ins: &str) -> String {
-    assert!(idx <= len(&s), "the index was larger than the target slice");
-    let insert_len = len(&ins.to_string());
-    let final_len = len(&s) + insert_len;
-    let mut r = String::with_capacity(final_len);
-    /*
-    for i in 0..final_len {
-      if i < idx {
-        r.push_str(&slice(&s, i..i + 1));
-      } else if i < idx + insert_len {
-        let i_ins = i - idx;
-        r.push_str(&slice(&ins.to_string(), i_ins..i_ins + 1));
-      } else {
-        let a_ins = i - insert_len;
-        r.push_str(&slice(&s, a_ins..a_ins + 1));
-      }
-    }
-    */
-    let first_half = &slice(&s, 0..idx);
-    let second_half = &slice(&s, idx..(final_len));
-    r.push_str(first_half);
-    r.push_str(ins);
-    r.push_str(second_half);
-    r
-  }
-
-  /*
   replaces all target str in String with insert str
   */
   pub fn replace(s: &String, target: &str, insert: &str) -> String {
@@ -678,15 +649,32 @@ pub mod text {
   }
 
   /*
+  inserts str into string, preserving graphemes
+  */
+  pub fn insert(s: &String, idx: usize, ins: &str) -> String {
+    assert!(idx <= len(&s), "the index was larger than the target slice");
+
+    let mut r = String::with_capacity(s.len() + ins.len());
+    let split_point = s.char_indices().nth(idx).map(|(i, _)| i).unwrap_or(s.len());
+
+    let first_half = &s[..split_point];
+    let second_half = &s[split_point..];
+    r.push_str(first_half);
+    r.push_str(ins);
+    r.push_str(second_half);
+    r
+  }
+
+  /*
   returns a slice of a string from a range, utf-8 compliant
   */
   pub fn slice(s: &String, r: Range<usize>) -> String {
-    let mut sub_string = Vec::<String>::new();
-    for (i, c) in s.chars().enumerate() {
-      if r.contains(&i) {
-        sub_string.push(c.to_string());
-      }
-    }
-    sub_string.join("")
+    let begin = s.char_indices().nth(r.start).map(|(i, _)| i).unwrap_or(0);
+    let end = s
+      .char_indices()
+      .nth(r.end)
+      .map(|(i, _)| i)
+      .unwrap_or(s.len());
+    s[begin..end].to_string()
   }
 }
