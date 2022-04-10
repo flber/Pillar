@@ -277,7 +277,7 @@ pub mod granite {
     in_content: bool,
     invalid_blocks: usize,
     i: usize,
-    char: &str,
+    char: char,
     bar: &Bar,
     /*now: Instant,*/
     mut debug: bool,
@@ -309,7 +309,7 @@ pub mod granite {
     println!("in_quotes: {}", in_quotes);
     println!("in_content: {}", in_content);
     println!("invalid_blocks: {}", invalid_blocks);
-    if char != "\n" {
+    if char != '\n' {
       println!("char: {}", char);
       // println!("Elapsed: {:.2?}", now.elapsed());
     } else {
@@ -367,9 +367,30 @@ pub mod granite {
     };
 
     let mut auto = false;
-    let mut i = 0;
 
     for (i, char) in s.char_indices() {
+      if debug {
+        match debug_output(
+          s,
+          elems.clone(),
+          in_quotes,
+          in_content,
+          invalid_blocks,
+          i,
+          char,
+          &bar,
+          debug,
+          auto,
+        ) {
+          (d, a) => {
+            debug = d;
+            auto = a;
+          }
+        }
+      } else {
+        bar.print(i);
+      }
+
       // checks for quote blocks
       match char {
         '\"' => {
@@ -414,7 +435,7 @@ pub mod granite {
 
       if !in_quotes {
         match char {
-          _ => output.push(char),
+          _ => output.push('a'),
         }
       }
     }
