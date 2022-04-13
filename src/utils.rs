@@ -324,27 +324,6 @@ pub mod granite {
     (debug, auto)
   }
 
-  /* this is an example implementation of efficient text replacement ![NON_FUNCTIONAL]!
-  pub fn find(input: &str) -> String {
-      lazy_static! {
-          static ref REGEX: Regex = Regex::new("[<>&]").unwrap();
-      }
-      let first = REGEX.find(&input).unwrap();
-        let mut output = String::from(&input[0..first]);
-        output.reserve(input.len() - first);
-        let rest = input[first..].chars();
-        for c in rest {
-            match c {
-                '<' => output.push_str("&lt;"),
-                '>' => output.push_str("&gt;"),
-                '&' => output.push_str("&amp;"),
-                _ => output.push(c),
-            }
-        }
-        output
-  }
-  */
-
   fn parse_granite(s: &String, mut debug: bool) -> String {
     let mut t = s.clone();
     let mut elems = Vec::<String>::new();

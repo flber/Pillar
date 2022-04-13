@@ -9,8 +9,11 @@ use std::time::SystemTime;
 use std::{fs::File, io::ErrorKind};
 use toml::Value;
 mod utils;
+use lazy_static::lazy_static;
+use regex::Regex;
 use utils::granite::*;
 use utils::text::*;
+
 // #[macro_use]
 // extern crate lazy_static;
 
@@ -38,6 +41,7 @@ fn main() -> std::io::Result<()> {
   // flags to define program behaviour
   let mut should_build = false;
   let mut debug_active = false;
+  let mut build_all = false;
 
   let args: Vec<String> = env::args().collect();
   match &args[..] {
@@ -61,6 +65,7 @@ fn main() -> std::io::Result<()> {
         should_build = true;
         match opt.as_str() {
           "--debug" => debug_active = true,
+          "--all" => build_all = true,
           _ => (),
         }
       }
@@ -104,7 +109,7 @@ fn main() -> std::io::Result<()> {
       }
 
       // re-builds the file if it was modified after the last build, or if it's a static page
-      if (modified > config.last_run) | static_build {
+      if (modified > config.last_run) | static_build | build_all {
         // formats target string to look like html_path/file.html
         let target = [
           config.html_path.clone(),
@@ -147,29 +152,15 @@ fn main() -> std::io::Result<()> {
 fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::Result<String> {
   let mut output = [path_str, "\n", contents].concat().to_string();
 
-  // this is sorta gross, but does a fine job of pulling plugin tags as long as the formatting is correct
-  let mut to_run = Vec::<String>::new();
-  for (i, chr) in contents.char_indices() {
-    if chr == '{' && slice(&contents, i - 1..i) == "{" {
-      let mut tag = slice(&contents, i..i + 1);
-      let mut num_close = 0;
-      for test_chr in slice(&contents, i..len(&contents)).chars() {
-        if !tag.is_empty() && test_chr != '}' {
-          tag.push(test_chr);
-        }
-        if !tag.is_empty() && test_chr == '}' {
-          num_close += 1;
-          if num_close > 1 {
-            break;
-          }
-        }
-      }
-      if !tag.is_empty() {
-        to_run.push(tag);
-      }
-    }
+  lazy_static! {
+    static ref RE: Regex = Regex::new(r"\{\{(\w+)\}\}").unwrap();
   }
-  let plugins: Vec<String> = to_run.into_iter().map(|s| slice(&s, 2..len(&s))).collect();
+
+  let plugins: Vec<String> = RE
+    .find_iter(&contents)
+    .filter_map(|m| m.as_str().parse().ok())
+    .map(|m| slice(&m, 2..len(&m) - 2))
+    .collect();
 
   for plugin in plugins {
     // fixing path
