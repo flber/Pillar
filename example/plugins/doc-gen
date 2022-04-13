@@ -1,0 +1,38 @@
+#!/bin/python
+
+import os
+import sys
+import glob
+import time
+
+file = open(".pillar.toml").readlines()
+for lines in file:
+	k = lines.split()
+	if len(k) > 0 and k[0] == "plugin_path":
+		plugin_path = k[2]
+
+for index, line in enumerate(sys.stdin):
+	if "{{doc-gen}}" in line:
+		docs = ""
+
+		abspath = os.path.abspath(plugin_path[1:-1])
+		files = glob.glob(abspath + "/*")
+		files.sort(key=os.path.getmtime, reverse=True)
+
+		#DOC: goes through all files in plugins directory, sorting by last edit time
+		for file in files:
+			name = file[len(abspath)+1:]
+
+			#DOC: reads plugin for lines containing "#DOC: " and adds them to `plugin_docs` string
+			plugin_docs = "<h3> " + name + "</h3>\n<ol>"
+			page = open(file).readlines()
+			for p_line in page:
+				if p_line.strip()[:6] == "#DOC: ":
+					plugin_docs += "<li>" + p_line.strip()[6:] + "</li>"
+			plugin_docs += "</ol>"
+			
+			#DOC: adds `plugin_docs` string to `docs`
+			docs += plugin_docs
+		
+		line = line.replace("{{doc-gen}}", docs)
+	sys.stdout.write(line)

@@ -63,14 +63,16 @@ template: fancy_template
 
 ## Extensions
 
-Pillar supports extensions in the form of executable scripts in your defined plugins folder. These work by receiving each parsed page, in html, through stdin. The script should then return a modified form of the page in its stdout. There are three extensions in the example folder, which replace the following tags:
+Pillar supports extensions in the form of executable scripts in your defined plugins folder. These work by receiving each parsed page, in html, through stdin. The script should then return a modified form of the page in its stdout. There are several extensions in the example folder, which replace the following tags:
 - `{{date}}` replaces with the date the content was last modified (the granite, not the html itself)
-- `{{feed}}` is an experimental rss feed generator which doesn't work right now
+- `{{doc-gen}}` generate documentation from comments in python plugins in the plugin directory
+- `{{feed}}` is a basic rss feed generator
 - `{{files}}` gives a list of files in a `/files` directory
 - `{{latest}}` replaces with a given number of the latest updated pages in an unordered list
 - `{{music}}` replaces with an unordered list of your album directory names in a designated music path
 - `{{stats}}` just gives a list of orphaned pages (the algorithm is not super complete, and may not be entirely accurate)
 - `{{title}}` is mostly for the html templates to get the title of a page based on its first h2 tag
+- `{{tree}}` is an in-development tree printout of page interconnectivity; non-functional
 
 ## Syntax Highlighting
 

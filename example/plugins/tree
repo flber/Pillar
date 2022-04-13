@@ -1,0 +1,56 @@
+#!/bin/python
+
+import os
+import re
+import sys
+import glob
+import time
+from pathlib import Path
+
+#DOC: not currently in use
+
+class Page:
+	path = ""
+	content = ""
+	links = []
+
+	def __init__(self, path, content, links):
+		self.path = path
+		self.content = content
+		self.links = links
+
+file = open(".pillar.toml").readlines()
+for lines in file:
+	k = lines.split()
+	if len(k) > 0 and k[0] == "html_path":
+		html_path = k[2]
+
+
+for index, line in enumerate(sys.stdin):
+	if "{{tree}}" in line:
+		tree = "<h3>File Tree:</h3>\n<ul>\n"
+
+		abspath = os.path.abspath(html_path[1:-1]) + "/"
+
+		
+		pages = [Page(abspath + "home.html", Path(abspath + "home.html"), [])]
+		files = ["home.html"]
+
+		for page in pages:
+			links = re.findall(r'<a href="([^"]+)">', page.content)
+			filtered = list(filter(lambda x : '/' not in x and ':' not in x, links))
+			new = [i for i in filtered if i not in files]
+			files += new
+			files = set(files)
+			files = (list(files))
+			# orphans = [i for i in orphans if i not in links]
+
+		for file in files:
+			title = "~default~"
+			page = Path(abspath + file).read_text()
+			title = re.findall(r'<h2>([^<]+)<\/h2>', page)[0]
+			tree += "\t<li><a href=\"" + abspath + file +  "\">" + title + "</a></li>\n"
+		
+		tree += "</ul>"
+		line = line.replace("{{tree}}", tree)
+	sys.stdout.write(line)
