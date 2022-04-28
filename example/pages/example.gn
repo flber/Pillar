@@ -6,6 +6,8 @@ title: Example
 
 [p|And this is a paragraph of text. Woah, semicolon:]
 
+[p|uh oh, invalid block! [ ]]
+
 [ul|
 	[li|item 1]
 	[li|item 2]
@@ -19,12 +21,10 @@ title: Example
 	[img, src: "dio.webp", alt: "YOU THOUGHT IT WAS A CODE DEMO, BUT IT WAS ME, DIO!" loading: "lazy"|]
 ]
 
-[a, href: "1234567890"|this is a link]
+[a, href: "https://mineralexistence.com"|this is a link]
 
 [p|{{date}} <- this is the date]
 
 [p|latest pages]
 
 {{latest}}
-
-123456789-123456789-123456789-

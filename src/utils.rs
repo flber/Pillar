@@ -272,6 +272,7 @@ pub mod granite {
   // t, elems, in_quotes, in_content, invalid_blocks, i, char, bar, now, debug, auto
   fn debug_output(
     t: &String,
+    out: &String,
     elems: Vec<String>,
     in_quotes: bool,
     in_content: bool,
@@ -299,7 +300,7 @@ pub mod granite {
     }
     println!(
       "...{}\x1b[31;1m@\x1b[0m{}...",
-      slice(&t, start..i),
+      slice(&out, start..i),
       slice(&t, i + 1..end)
     );
     // variable output
@@ -368,10 +369,13 @@ pub mod granite {
 
     let mut auto = false;
 
+    let blacklist = [String::from("pre"), String::from("code")];
+
     for (i, char) in s.char_indices() {
       if debug {
         match debug_output(
           s,
+          &output,
           elems.clone(),
           in_quotes,
           in_content,
@@ -391,52 +395,77 @@ pub mod granite {
         bar.print(i);
       }
 
-      // checks for quote blocks
+      // checks for quote & content blocks
       match char {
         '\"' => {
-          if in_quotes {
-            in_quotes = false;
-          } else if !in_quotes {
-            in_quotes = true;
+          if slice(s, i - 1..i) != "\\" {
+            if in_quotes {
+              in_quotes = false;
+            } else {
+              in_quotes = true;
+            }
           }
         }
         '[' => {
-          let mut num_blocks = 0;
-          let mut j = i;
-          let valid = loop {
-            if j > len(s) {
-              break false;
-            }
-            let test_char = &slice(s, j..j + 1)[..];
-            match test_char {
-              "[" => {
-                num_blocks += 1;
-              }
-              "|" => {
-                if num_blocks == 0 {
-                  break true;
-                };
-              }
-              "]" => {
-                num_blocks -= 1;
-              }
-              _ => (),
-            }
-            j += 1;
-          };
-          if valid {
+          if in_content {
+            in_content = false;
+          }
+        }
+        '|' => {
+          if !in_content {
             in_content = true;
-          } else {
-            invalid_blocks += 1;
+          }
+        }
+        ']' => {
+          if in_content {
+            in_content = false;
           }
         }
         _ => (),
       }
 
       if !in_quotes {
-        match char {
-          _ => output.push('a'),
+        if !in_content {
+          match char {
+            '\n' => output.push(char),
+            '\t' => output.push(char),
+            ',' => (),
+            '[' => {
+              output.push('<');
+              let mut new_elem = String::new();
+              for tchar in slice(s, i + 1..len(s)).chars() {
+                match tchar {
+                  ',' => break,
+                  ' ' => break,
+                  '|' => break,
+                  _ => new_elem.push(tchar),
+                }
+              }
+              elems.push(new_elem);
+            }
+            ':' => output.push('='),
+            ' ' => {
+              if slice(s, i - 1..i) == ":" {
+                ()
+              } else {
+                output.push(char)
+              }
+            }
+            ']' => {
+              output.push_str("</");
+              output.push_str(&elems.pop().unwrap_or("</>".to_string()));
+              output.push('>');
+            }
+            _ => output.push(char),
+          }
+        } else {
+          match char {
+            '|' => output.push('>'),
+            _ => output.push(char),
+          }
         }
+      } else {
+        output.push(char);
       }
     }
     return output;

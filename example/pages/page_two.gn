@@ -1,6 +1,5 @@
 !meta!
 title: Page Two
-static: true
 !meta!
 
 [h1|Another page, for testing purposes]
@@ -8,5 +7,3 @@ static: true
 [p|Hello. This is a paragraph. Below is the date this file was last updated.]
 
 [p|{{date}} <- this is the date]
-
-123456789-123456789-123456789-
