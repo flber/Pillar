@@ -260,11 +260,21 @@ RTN
             A        B         C
 </pre>
 
-<p>At part A we duplicate and `GET` the two bytes at the top of the stack (remember, that's now the address to the nex
+<p>At part A we duplicate and `GET` the two bytes at the top of the stack (remember, that's now the address to the next byte of our string), and the value at that address is compared to `#00`, the ascii null char, at part B. The `NEQ` opcode, as the name suggests, checks if its inputs are not equal. If they aren't equal, it returns a 1, and if they are equal it returns a 0.</p>
+<p>Part C starts by adding the literal relative address of the `&loop` sublabel to the stack, and then the conditional jump operator, `JNZ`, uses the previous boolean added by part B to decide if it should jump to that address.</p>
+<p>In this way, the loop repeats, printing each byte, until it hits a null byte, at which point it stops and returns.</p>
+
+<p>And there we have it: Hello world!</p>
+ 
+ 
+ 
+ 
+ 
+
 		</article>
 		<footer>
 			<hr>
-			<em>Last updated: 250322</em>
+			<em>Last updated: 300422</em>
 		</footer>
 	</body>
 </html>

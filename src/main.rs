@@ -13,6 +13,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use utils::granite::*;
 use utils::text::*;
+use walkdir::{DirEntry, WalkDir};
 
 // #[macro_use]
 // extern crate lazy_static;
@@ -35,6 +36,14 @@ Convert granite to html\n",
 fn usage() {
   println!("{}", get_banner());
   println!("{}", HELP_MENU);
+}
+
+fn is_not_hidden(entry: &DirEntry) -> bool {
+  entry
+    .file_name()
+    .to_str()
+    .map(|s| entry.depth() == 0 || !s.starts_with("."))
+    .unwrap_or(false)
 }
 
 fn main() -> std::io::Result<()> {
@@ -80,11 +89,57 @@ fn main() -> std::io::Result<()> {
     // a config struct has path information and a last run date
     let config = Config::new().unwrap();
     // uses config info to go through granite directory files and build them into html
-    for e in fs::read_dir(&config.granite_path)? {
-      let entry = e?;
+
+    let walk = WalkDir::new(&config.granite_path)
+      .into_iter()
+      .filter_entry(|e| is_not_hidden(e))
+      .filter_map(|v| v.ok());
+
+    let paths = walk.filter_map(|x| {
+      if !fs::metadata(x.path())
+        .expect("failure to parse path")
+        .is_dir()
+      {
+        Some(x)
+      } else {
+        None
+      }
+    });
+
+    let mut path_strs = Vec::<String>::new();
+    for path in paths {
+      path_strs.push(format!("{:#?}", path.path()))
+    }
+
+    path_strs = path_strs
+      .iter()
+      .map(|x| slice(x, 1..len(x) - 1))
+      .collect::<Vec<_>>();
+
+    for path_str in path_strs {
+      let path = std::path::Path::new(&path_str);
+      let prefix = path.parent().unwrap();
+      let prefix_string = format!("{}", prefix.display());
+      if &prefix_string
+        != &slice(
+          &config.granite_path.to_string(),
+          0..len(&config.granite_path.to_string()) - 1,
+        )
+      {
+        let dir_target = [
+          config.html_path.clone(),
+          slice(
+            &prefix_string,
+            len(&config.granite_path.to_string())..len(&prefix_string),
+          ),
+        ]
+        .concat();
+        std::fs::create_dir_all(dir_target).unwrap();
+      }
+
       // normalizes path str
-      let path = format!("{:?}", entry.path());
-      let path_str = slice(&path, 1..len(&path) - 1);
+      // let path = format!("{:?}", entry.path());
+      // let path_str = slice(&path, 1..len(&path) - 1);
 
       // gets and formats file metadata, modified and creation time
       let meta = fs::metadata(&path_str)?;
@@ -114,8 +169,8 @@ fn main() -> std::io::Result<()> {
         let target = [
           config.html_path.clone(),
           slice(
-            &path,
-            len(&config.granite_path.to_string()) + 1..len(&path) - 3,
+            &path_str,
+            len(&config.granite_path.to_string())..len(&path_str) - 2,
           ),
           String::from("html"),
         ]
