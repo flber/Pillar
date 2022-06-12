@@ -244,6 +244,7 @@ fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::R
 
     output = s;
   }
+  // removes path str added to begining of file...?
   let mut final_string = String::new();
   for i in 0..len(&output) {
     let char = &slice(&output, i..i + 1);
