@@ -208,7 +208,7 @@ fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::R
   let mut output = [path_str, "\n", contents].concat().to_string();
 
   lazy_static! {
-    static ref RE: Regex = Regex::new(r"\{\{(\w+)\}\}").unwrap();
+    static ref RE: Regex = Regex::new(r"\{\{([^\}]+)\}\}").unwrap();
   }
 
   let plugins: Vec<String> = RE
@@ -218,7 +218,6 @@ fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::R
     .collect();
 
   for plugin in plugins {
-    // fixing path
     let script_str = format!("./{}{}", &config.plugin_path, plugin);
 
     // run script
