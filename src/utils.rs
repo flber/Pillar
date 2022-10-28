@@ -1,17 +1,22 @@
 pub mod format {
-	pub fn fast_zip(a: Vec<&str>, b: Vec<&str>) -> String {
-		let mut ab: Vec<Vec<&str>> = vec![a, b];
-		let mut out_bytes: Vec<u8> = vec![];
-
-		let len = ab[0].len() + ab[1].len();
-		for i in 0..len {
-			let list = (i + 2) % 2;
-			for c in ab[list].remove(0).bytes() {
-				out_bytes.push(c)
+	pub fn fast_zip(xs: Vec<&str>, ys: Vec<&str>) -> String {
+		let mut extra = "";
+		if xs.len() != ys.len() {
+			if xs.len() > ys.len() {
+				extra = xs[xs.len() - 1];
+			} else {
+				extra = ys[ys.len() - 1];
 			}
 		}
 
-		String::from_utf8_lossy(&out_bytes).to_string()
+		let mut zipped = xs
+			.iter()
+			.zip(ys.iter())
+			.map(|(a, b)| vec![*a, *b].concat())
+			.collect::<Vec<String>>();
+		zipped.push(String::from(extra));
+
+		zipped.join("")
 	}
 }
 
