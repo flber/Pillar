@@ -5,7 +5,7 @@ pub mod parser {
 
 	// sorta a weird way of doing things, but to check if a byte is in RUNES use:
 	// RUNES.bytes()
-	pub const _RUNES: &str = "~!@#$%&*+=?>";
+	pub const RUNES: &str = "~-!@#$%&*+=?>";
 
 	/*
 	pub struct Attr {
@@ -40,20 +40,27 @@ pub mod parser {
 		/// Returns:
 		/// 	optional token representation of the inputed rune and string
 		pub fn parse(_rune: &u8, content: &str) -> Option<Token> {
-			let bytes = content.bytes();
+			let bytes: &[u8] = content.as_bytes();
 			let mut t = Token::default();
 			t.rune = *_rune;
 			let mut t_bytes: Vec<u8> = vec![];
 
-			let rune_char: u8 = b'$';
+			let mut rune_char: u8 = b'$';
 			let mut num_brack = 0;
 			let mut range = Range { start: 0, end: 0 };
 
-			for (i, c) in bytes.enumerate() {
+			for (i, c) in bytes.into_iter().enumerate() {
 				match c {
 					b'{' => {
 						if num_brack < 1 {
-							t_bytes.push(c);
+							if RUNES.as_bytes().contains(&bytes[i - 1]) {
+								rune_char = bytes[i - 1];
+								t_bytes.pop();
+							} else {
+								rune_char = b'$';
+							}
+
+							t_bytes.push(*c);
 							range.start = i;
 						}
 						num_brack += 1;
@@ -61,7 +68,7 @@ pub mod parser {
 					b'}' => {
 						num_brack -= 1;
 						if num_brack < 1 {
-							t_bytes.push(c);
+							t_bytes.push(*c);
 							range.end = i;
 							let new_token =
 								Self::parse(&rune_char, &content[range.start + 1..range.end]);
@@ -72,7 +79,7 @@ pub mod parser {
 					}
 					_ => {
 						if num_brack < 1 {
-							t_bytes.push(c);
+							t_bytes.push(*c);
 						}
 					}
 				}
@@ -86,9 +93,25 @@ pub mod parser {
 
 	impl fmt::Display for Token {
 		fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+			let elem = match self.rune {
+				b'~' => "ul",
+				b'-' => "li",
+				b'!' => "img",
+				b'@' => "a",
+				b'#' => "h1",
+				b'$' => "",
+				b'&' => "video",
+				b'*' => "i",
+				b'+' => "summary",
+				b'=' => "pre",
+				b'?' => "",
+				b'>' => "blockquote",
+				_ => "",
+			};
+
 			if self.tokens.len() == 0 {
 				// this is where the element formatting will go
-				write!(f, "{}", self.contents.clone())?;
+				write!(f, "<{}>{}</{}>", elem, self.contents.clone(), elem)?;
 			} else {
 				let mut parsed_tokens: Vec<String> = vec![];
 				for t in &self.tokens {
@@ -96,7 +119,13 @@ pub mod parser {
 				}
 				let parsed_tokens = parsed_tokens.iter().map(|t| &t[..]).collect::<Vec<&str>>();
 				let contents = self.contents.split("{}").collect::<Vec<&str>>();
-				write!(f, "{}", format::fast_zip(contents, parsed_tokens))?;
+				write!(
+					f,
+					"<{}>{}</{}>",
+					elem,
+					format::fast_zip(contents, parsed_tokens),
+					elem
+				)?;
 			}
 			Ok(())
 		}
@@ -141,10 +170,23 @@ mod test {
 	#[test]
 	fn test_display() {
 		let rune = b'$';
+		let content = String::from("the *{quick @{brown}} fox ={jumps}");
+		let parsed = parser::Token::parse(&rune, &content).unwrap();
+		let display = format!("{}", parsed);
+
+		assert_eq!(
+			"<>the <i>quick <a>brown</a></i> fox <pre>jumps</pre></>",
+			display
+		);
+	}
+
+	#[test]
+	fn test_display_empty() {
+		let rune = b'$';
 		let content = String::from("the {quick {brown}} fox {jumps}");
 		let parsed = parser::Token::parse(&rune, &content).unwrap();
 		let display = format!("{}", parsed);
 
-		assert_eq!("the quick brown fox jumps", display);
+		assert_eq!("<>the <>quick <>brown</></> fox <>jumps</></>", display);
 	}
 }

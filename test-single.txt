@@ -1,37 +1,35 @@
-{Hi}
+#{Hi}
 
-{I'm Ben, a person (who prefers they/them pronouns) from the bay area, though I go to school in Santa Cruz. I like to make {food}, occasionally {draw}, and tell computers to do things for me (though we often have disagreements).}
+{I'm Ben, a person (who prefers they/them pronouns) from the bay area, though I go to school in Santa Cruz. I like to make @{food}, occasionally @{draw}, and tell computers to do things for me (though we often have disagreements).}
 
-{I've worked on a few {projects}, including a {game or two}. When I'm not getting frustrated with computers for not following my every command, I enjoy playing {video games}, {hiking}, and {reading}.}
+{I've worked on a few @{projects}, including a @{game or two}. When I'm not getting frustrated with computers for not following my every command, I enjoy playing @{video games}, @{hiking}, and @{reading}.}
 
-{If you want to contact me about commercial work, please first take a look at my {resume}. Email is generally the best method of communication for me, and you can find my email address linked in the footer.}
+{If you want to contact me about commercial work, please first take a look at my @{resume}. Email is generally the best method of communication for me, and you can find my email address linked in the footer.}
 
 {Because I'm not super experienced in any one field, I often find myself anxious those more knowledgeable. That's mostly because I don't want to waste their time, but  I probably end up wasting more time by adding prefaces to my questions, such as:}
-{
-	{Sorry to bother you, but...}
-	{This may be a simple question, but...}
-	{Pardon my lack of knowledge in this, but...}
-	{I probably just missed the answer to this in the docs somewhere, but...}
+~{
+	-{Sorry to bother you, but...}
+	-{This may be a simple question, but...}
+	-{Pardon my lack of knowledge in this, but...}
+	-{I probably just missed the answer to this in the docs somewhere, but...}
 }
 {and others. I'll try to just cut to the chase from now on, but if you need some context as to why I'm asking about something you think is simple, please feel free to mentally add one of the above prefaces to the start of my question!}
 
 {You can find the source code for this site in any of these places:}
-{
-	{{codeberg}}
-	{{github}}
-	{{srht}}
+~{
+	-{@{codeberg}}
+	-{@{github}}
+	-{@{srht}}
 }
 
-{You can check out the {inventory} page for a list of the hardware and software I use.}
+{You can check out the @{inventory} page for a list of the hardware and software I use.}
 
-{Feel free to say hi on {mastodon} or via my {email}}
+{Feel free to say hi on @{mastodon} or via my @{email}}
 
-{I'm also on {a webring}! All the sites on it are pretty neat, including those of my neighbours:}
-{
-	{Alessia Bellisario's {anti/pattern}}
-	{Martin Schotten's {fragmentscenario}}
+{I'm also on @{a webring}! All the sites on it are pretty neat, including those of my neighbours:}
+~{
+	-{Alessia Bellisario's @{anti/pattern}}
+	-{Martin Schotten's @{fragmentscenario}}
 }
 
 {And finally, here are some fun banners which I've started collecting :3}
-
-{}

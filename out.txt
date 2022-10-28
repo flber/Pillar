@@ -1,12 +1,12 @@
-len: 15
+len: 14
 tree
 -------------------
 Token {
     rune: 36,
-    contents: "{}\n\n{}\n\n{}\n\n{}\n\n{}\n{}\n{}\n\n{}\n{}\n\n{}\n\n{}\n\n{}\n{}\n\n{}\n\n{}",
+    contents: "{}\n\n{}\n\n{}\n\n{}\n\n{}\n{}\n{}\n\n{}\n{}\n\n{}\n\n{}\n\n{}\n{}\n\n{}\n",
     tokens: [
         Token {
-            rune: 36,
+            rune: 35,
             contents: "Hi",
             tokens: [],
         },
@@ -15,12 +15,12 @@ Token {
             contents: "I'm Ben, a person (who prefers they/them pronouns) from the bay area, though I go to school in Santa Cruz. I like to make {}, occasionally {}, and tell computers to do things for me (though we often have disagreements).",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "food",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "draw",
                     tokens: [],
                 },
@@ -31,27 +31,27 @@ Token {
             contents: "I've worked on a few {}, including a {}. When I'm not getting frustrated with computers for not following my every command, I enjoy playing {}, {}, and {}.",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "projects",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "game or two",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "video games",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "hiking",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "reading",
                     tokens: [],
                 },
@@ -62,7 +62,7 @@ Token {
             contents: "If you want to contact me about commercial work, please first take a look at my {}. Email is generally the best method of communication for me, and you can find my email address linked in the footer.",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "resume",
                     tokens: [],
                 },
@@ -74,26 +74,26 @@ Token {
             tokens: [],
         },
         Token {
-            rune: 36,
+            rune: 126,
             contents: "\n\t{}\n\t{}\n\t{}\n\t{}\n",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "Sorry to bother you, but...",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "This may be a simple question, but...",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "Pardon my lack of knowledge in this, but...",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "I probably just missed the answer to this in the docs somewhere, but...",
                     tokens: [],
                 },
@@ -110,37 +110,37 @@ Token {
             tokens: [],
         },
         Token {
-            rune: 36,
+            rune: 126,
             contents: "\n\t{}\n\t{}\n\t{}\n",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "{}",
                     tokens: [
                         Token {
-                            rune: 36,
+                            rune: 64,
                             contents: "codeberg",
                             tokens: [],
                         },
                     ],
                 },
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "{}",
                     tokens: [
                         Token {
-                            rune: 36,
+                            rune: 64,
                             contents: "github",
                             tokens: [],
                         },
                     ],
                 },
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "{}",
                     tokens: [
                         Token {
-                            rune: 36,
+                            rune: 64,
                             contents: "srht",
                             tokens: [],
                         },
@@ -153,7 +153,7 @@ Token {
             contents: "You can check out the {} page for a list of the hardware and software I use.",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "inventory",
                     tokens: [],
                 },
@@ -164,12 +164,12 @@ Token {
             contents: "Feel free to say hi on {} or via my {}",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "mastodon",
                     tokens: [],
                 },
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "email",
                     tokens: [],
                 },
@@ -180,33 +180,33 @@ Token {
             contents: "I'm also on {}! All the sites on it are pretty neat, including those of my neighbours:",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 64,
                     contents: "a webring",
                     tokens: [],
                 },
             ],
         },
         Token {
-            rune: 36,
+            rune: 126,
             contents: "\n\t{}\n\t{}\n",
             tokens: [
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "Alessia Bellisario's {}",
                     tokens: [
                         Token {
-                            rune: 36,
+                            rune: 64,
                             contents: "anti/pattern",
                             tokens: [],
                         },
                     ],
                 },
                 Token {
-                    rune: 36,
+                    rune: 45,
                     contents: "Martin Schotten's {}",
                     tokens: [
                         Token {
-                            rune: 36,
+                            rune: 64,
                             contents: "fragmentscenario",
                             tokens: [],
                         },
@@ -219,50 +219,44 @@ Token {
             contents: "And finally, here are some fun banners which I've started collecting :3",
             tokens: [],
         },
-        Token {
-            rune: 36,
-            contents: "",
-            tokens: [],
-        },
     ],
 }
 
 print
 -------------------
-Hi
+<><h1>Hi</h1>
 
-I'm Ben, a person (who prefers they/them pronouns) from the bay area, though I go to school in Santa Cruz. I like to make food, occasionally draw, and tell computers to do things for me (though we often have disagreements).
+<>I'm Ben, a person (who prefers they/them pronouns) from the bay area, though I go to school in Santa Cruz. I like to make <a>food</a>, occasionally <a>draw</a>, and tell computers to do things for me (though we often have disagreements).</>
 
-I've worked on a few projects, including a game or two. When I'm not getting frustrated with computers for not following my every command, I enjoy playing video games, hiking, and reading.
+<>I've worked on a few <a>projects</a>, including a <a>game or two</a>. When I'm not getting frustrated with computers for not following my every command, I enjoy playing <a>video games</a>, <a>hiking</a>, and <a>reading</a>.</>
 
-If you want to contact me about commercial work, please first take a look at my resume. Email is generally the best method of communication for me, and you can find my email address linked in the footer.
+<>If you want to contact me about commercial work, please first take a look at my <a>resume</a>. Email is generally the best method of communication for me, and you can find my email address linked in the footer.</>
 
-Because I'm not super experienced in any one field, I often find myself anxious those more knowledgeable. That's mostly because I don't want to waste their time, but  I probably end up wasting more time by adding prefaces to my questions, such as:
+<>Because I'm not super experienced in any one field, I often find myself anxious those more knowledgeable. That's mostly because I don't want to waste their time, but  I probably end up wasting more time by adding prefaces to my questions, such as:</>
+<ul>
+	<li>Sorry to bother you, but...</li>
+	<li>This may be a simple question, but...</li>
+	<li>Pardon my lack of knowledge in this, but...</li>
+	<li>I probably just missed the answer to this in the docs somewhere, but...</li>
+</ul>
+<>and others. I'll try to just cut to the chase from now on, but if you need some context as to why I'm asking about something you think is simple, please feel free to mentally add one of the above prefaces to the start of my question!</>
 
-	Sorry to bother you, but...
-	This may be a simple question, but...
-	Pardon my lack of knowledge in this, but...
-	I probably just missed the answer to this in the docs somewhere, but...
+<>You can find the source code for this site in any of these places:</>
+<ul>
+	<li><a>codeberg</a></li>
+	<li><a>github</a></li>
+	<li><a>srht</a></li>
+</ul>
 
-and others. I'll try to just cut to the chase from now on, but if you need some context as to why I'm asking about something you think is simple, please feel free to mentally add one of the above prefaces to the start of my question!
+<>You can check out the <a>inventory</a> page for a list of the hardware and software I use.</>
 
-You can find the source code for this site in any of these places:
+<>Feel free to say hi on <a>mastodon</a> or via my <a>email</a></>
 
-	codeberg
-	github
-	srht
+<>I'm also on <a>a webring</a>! All the sites on it are pretty neat, including those of my neighbours:</>
+<ul>
+	<li>Alessia Bellisario's <a>anti/pattern</a></li>
+	<li>Martin Schotten's <a>fragmentscenario</a></li>
+</ul>
 
-
-You can check out the inventory page for a list of the hardware and software I use.
-
-Feel free to say hi on mastodon or via my email
-
-I'm also on a webring! All the sites on it are pretty neat, including those of my neighbours:
-
-	Alessia Bellisario's anti/pattern
-	Martin Schotten's fragmentscenario
-
-
-And finally, here are some fun banners which I've started collecting :3
-
-
+<>And finally, here are some fun banners which I've started collecting :3</>
+</>
