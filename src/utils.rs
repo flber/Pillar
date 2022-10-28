@@ -1,40 +1,17 @@
 pub mod format {
-	use std::cmp;
+	pub fn fast_zip(a: Vec<&str>, b: Vec<&str>) -> String {
+		let mut ab: Vec<Vec<&str>> = vec![a, b];
+		let mut out_bytes: Vec<u8> = vec![];
 
-	pub fn fast_zip(xs: Vec<&str>, ys: Vec<&str>) -> String {
-		let mut extra = "";
-		if xs.len() != ys.len() {
-			if xs.len() > ys.len() {
-				extra = xs[xs.len() - 1];
-			} else {
-				extra = ys[ys.len() - 1];
+		let len = ab[0].len() + ab[1].len();
+		for i in 0..len {
+			let list = (i + 2) % 2;
+			for c in ab[list].remove(0).bytes() {
+				out_bytes.push(c)
 			}
 		}
 
-		let mut zipped = xs
-			.iter()
-			.zip(ys.iter())
-			.map(|(a, b)| vec![*a, *b].concat())
-			.collect::<Vec<String>>();
-
-		/*
-			let len = cmp::min(xs.len(), ys.len());
-			let xs = &xs[..len];
-			let ys = &ys[..len];
-
-			let mut zipped: Vec<&str> = vec![];
-			for i in 0..len {
-				let x = xs[i];
-				let y = ys[i];
-
-				zipped.push(x);
-				zipped.push(y);
-			}
-		*/
-
-		zipped.push(String::from(extra));
-
-		zipped.join("")
+		String::from_utf8_lossy(&out_bytes).to_string()
 	}
 }
 
