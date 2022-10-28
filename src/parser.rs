@@ -1,4 +1,6 @@
 pub mod parser {
+	use crate::utils::*;
+	use std::fmt;
 	use std::ops::Range;
 
 	// sorta a weird way of doing things, but to check if a byte is in RUNES use:
@@ -82,22 +84,32 @@ pub mod parser {
 		}
 	}
 
+	impl fmt::Display for Token {
+		fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+			if self.tokens.len() == 0 {
+				// this is where the element formatting will go
+				write!(f, "{}", self.contents.clone())?;
+			} else {
+				let mut parsed_tokens: Vec<String> = vec![];
+				for t in &self.tokens {
+					parsed_tokens.push(t.to_string().to_owned());
+				}
+				let parsed_tokens = parsed_tokens.iter().map(|t| &t[..]).collect::<Vec<&str>>();
+				let contents = self.contents.split("{}").collect::<Vec<&str>>();
+				write!(f, "{}", format::fast_zip(contents, parsed_tokens))?;
+			}
+			Ok(())
+		}
+	}
+
 	pub struct _Page {
 		metadata: String,
 		tokens: Token,
 	}
 }
 
-/*
-pub mod preproc {
-	use crate::parser::page::*;
-
-	fn parse(input: &String) -> Page {}
-}
-*/
-
 #[cfg(test)]
-mod tests {
+mod test {
 	use super::*;
 
 	#[test]
@@ -124,5 +136,15 @@ mod tests {
 		assert_eq!("🚚🜗🦇 {} 🌖🵟🥖 {}", parsed.contents);
 		assert_eq!("🪟🗐💒🐞🎉 {}", parsed.tokens[0].contents);
 		assert_eq!("🧣👜🯹🖺🌗🯶🶰", parsed.tokens[1].contents);
+	}
+
+	#[test]
+	fn test_display() {
+		let rune = b'$';
+		let content = String::from("the {quick {brown}} fox {jumps}");
+		let parsed = parser::Token::parse(&rune, &content).unwrap();
+		let display = format!("{}", parsed);
+
+		assert_eq!("the quick brown fox jumps", display);
 	}
 }
