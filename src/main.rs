@@ -21,6 +21,7 @@ fn main() {
 	let print = format!("{}", parsed);
 
 	println!("len: {}", parsed.tokens.len());
+	println!("parsed len: {}", print.len());
 	if p {
 		println!("tree\n-------------------\n{:#?}\n", parsed);
 		println!("print\n-------------------\n{}", print);

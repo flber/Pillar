@@ -17,9 +17,9 @@ pub mod parser {
 	/// Interface for a node on the abstract token tree to build a page.
 	///
 	/// attributes:
-	/// 	rune: str in the RUNES vec denoting the associated element
-	/// 	contents: format string to encode the non-token part of a token
-	/// 	tokens: vec of child tokens
+	///   rune: str in the RUNES vec denoting the associated element
+	///   contents: format string to encode the non-token part of a token
+	///   tokens: vec of child tokens
 	#[derive(Debug, Default)]
 	pub struct Token {
 		pub rune: u8,
@@ -34,26 +34,26 @@ pub mod parser {
 		/// Helper function to parse a string and rune into a token tree.
 		///
 		/// Args:
-		/// 	r: rune to convey the outer context
-		/// 	s: interior of passed rune to be parsed into token
+		///   r: rune to convey the outer context
+		///   s: interior of passed rune to be parsed into token
 		///
 		/// Returns:
-		/// 	optional token representation of the inputed rune and string
-		pub fn parse(_rune: &u8, content: &str) -> Option<Token> {
+		///   optional token representation of the inputed rune and string
+		pub fn parse(rune: &u8, content: &str) -> Option<Token> {
 			let bytes: &[u8] = content.as_bytes();
 			let mut t = Token::default();
-			t.rune = *_rune;
+			t.rune = *rune;
 			let mut t_bytes: Vec<u8> = vec![];
 
 			let mut rune_char: u8 = b'$';
 			let mut num_brack = 0;
 			let mut range = Range { start: 0, end: 0 };
 
-			for (i, c) in bytes.into_iter().enumerate() {
+			for (i, c) in bytes.iter().enumerate() {
 				match c {
 					b'{' => {
 						if num_brack < 1 {
-							if RUNES.as_bytes().contains(&bytes[i - 1]) {
+							if i > 0 && RUNES.as_bytes().contains(&bytes[i - 1]) {
 								rune_char = bytes[i - 1];
 								t_bytes.pop();
 							} else {
@@ -64,6 +64,12 @@ pub mod parser {
 							range.start = i;
 						}
 						num_brack += 1;
+					}
+					b'|' => {
+						if i > 0 && bytes[i - 1] == b'{' {
+						} else {
+							t_bytes.push(*c);
+						}
 					}
 					b'}' => {
 						num_brack -= 1;
@@ -109,7 +115,7 @@ pub mod parser {
 				_ => "",
 			};
 
-			if self.tokens.len() == 0 {
+			if self.tokens.is_empty() {
 				// this is where the element formatting will go
 				write!(f, "<{}>{}</{}>", elem, self.contents.clone(), elem)?;
 			} else {
