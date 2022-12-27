@@ -210,39 +210,52 @@ fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::R
 		static ref RE: Regex = Regex::new(r"\{\{([^\}]+)\}\}").unwrap();
 	}
 
-	let plugins: Vec<String> = RE
+	let mut plugins: Vec<String> = RE
 		.find_iter(contents)
 		.filter_map(|m| m.as_str().parse().ok())
 		.map(|m| slice(&m, 2..len(&m) - 2))
 		.collect();
 
-	for plugin in plugins {
-		let script_str = format!("./{}{}", &config.plugin_path, plugin);
+	while !plugins.is_empty() {
+		println!("plugins: {:?}", plugins);
+		for plugin in &plugins {
+			println!("{}", &plugin);
+			let script_str = format!("./{}{}", &config.plugin_path, plugin);
 
-		// run script
-		let process = match Command::new(script_str)
-			.stdin(Stdio::piped())
-			.stdout(Stdio::piped())
-			.spawn()
-		{
-			Err(why) => panic!("couldn't spawn process: {}", why),
-			Ok(process) => process,
-		};
+			// run script
+			let process = match Command::new(script_str)
+				.stdin(Stdio::piped())
+				.stdout(Stdio::piped())
+				.spawn()
+			{
+				Err(why) => panic!("couldn't spawn process: {}", why),
+				Ok(process) => process,
+			};
 
-		match process.stdin.unwrap().write_all(output.as_bytes()) {
-			Err(why) => panic!("couldn't write to script stdin: {}", why),
-			Ok(_) => (),
+			process
+				.stdin
+				.unwrap()
+				.write_all(output.as_bytes())
+				.expect("couldn't write to script stdin");
+
+			let mut s = String::new();
+			process
+				.stdout
+				.unwrap()
+				.read_to_string(&mut s)
+				.expect("couldn't read script stdout");
+
+			output = s;
 		}
 
-		let mut s = String::new();
-		match process.stdout.unwrap().read_to_string(&mut s) {
-			Err(why) => panic!("couldn't read script stdout: {}", why),
-			Ok(_) => (),
-		}
-
-		output = s;
+		plugins = RE
+			.find_iter(&output)
+			.filter_map(|m| m.as_str().parse().ok())
+			.map(|m| slice(&m, 2..len(&m) - 2))
+			.collect();
 	}
-	// removes path str added to begining of file...?
+
+	// removes path str added to beginning of file...?
 	let mut final_string = String::new();
 	for i in 0..len(&output) {
 		let char = &slice(&output, i..i + 1);
