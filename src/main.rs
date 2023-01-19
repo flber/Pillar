@@ -3,27 +3,37 @@ use std::fs;
 
 mod parser;
 mod utils;
-use parser::parser::Token;
+use parser::Token;
 
 const DEFAULT_TEST_PATH: &str = "test-single.txt";
 
 fn main() {
-	let args: Vec<String> = env::args().collect();
-	let (path, p) = match &args[..] {
-		[_, path] => (&path[..], false),
-		[_, path, print] => (&path[..], print == "print"),
-		_ => (DEFAULT_TEST_PATH, false),
+	let string_args: Vec<String> = env::args().collect();
+	let args: Vec<&str> = string_args.iter().map(|a| a.as_str()).collect();
+
+	let (path, p, o) = match &args[..] {
+		[_, path] => (&path[..], false, None),
+		[_, path, print] => (&path[..], print == &"print", None),
+		[_, path, "print", output] => match &output[..] {
+			"tree" => (&path[..], true, Some("tree")),
+			"html" => (&path[..], true, Some("html")),
+			_ => (&path[..], true, None),
+		},
+		_ => (DEFAULT_TEST_PATH, false, None),
 	};
 
-	let rune = b'$';
-	let content = fs::read_to_string(path).unwrap();
-	let parsed = Token::parse(&rune, &content).unwrap();
-	let print = format!("{}", parsed);
+	let content: String = fs::read_to_string(path).unwrap();
+	let tree: Token = Token::new(&content);
+	let html: String = format!("{}", tree);
 
-	println!("len: {}", parsed.tokens.len());
-	println!("parsed len: {}", print.len());
+	println!("len: {}", tree.tokens.len());
+	println!("parsed len: {}", html.len());
 	if p {
-		println!("tree\n-------------------\n{:#?}\n", parsed);
-		println!("print\n-------------------\n{}", print);
+		match o {
+			Some("tree") => println!("\ntree\n-------------------\n{:#?}\n", tree),
+			Some("html") => println!("\nprint\n-------------------\n{}", html),
+			None => println!("tree\n-------------------\n{:#?}\n", tree),
+			_ => (),
+		}
 	}
 }
