@@ -70,6 +70,7 @@ impl Token {
 				}
 				b'|' => {
 					if i > 0 && bytes[i - 1] == b'{' {
+						// attribute parsing will go here
 					} else {
 						t_bytes.push(*c);
 					}
@@ -114,9 +115,9 @@ impl fmt::Display for Token {
 			b'+' => "summary",
 			b'=' => "pre",
 			b'>' => "blockquote",
-			b'?' => "PARSE_ERROR",	// evauluates to remove tag syntax when printed
-			b';' => "",							// default, "contextual" rune
-			b'$' => "",							// reserved "scripting" rune
+			b'?' => "PARSE_ERROR", // evauluates to remove tag syntax when printed
+			b';' => "",            // default, "contextual" rune
+			b'$' => "",            // reserved "scripting" rune
 			_ => "",
 		};
 
@@ -201,10 +202,13 @@ mod test {
 
 		assert_eq!("<>the <>quick <>brown</></> fox <>jumps</></>", display);
 	}
-	
+
 	#[test]
 	fn test_display_null() {
-		let content = format!("the {}{{quick {{brown}}}} fox {{jumps}}", RUNE_EMPTY as char);
+		let content = format!(
+			"the {}{{quick {{brown}}}} fox {{jumps}}",
+			RUNE_EMPTY as char
+		);
 		let parsed = Token::parse(RUNE_EMPTY, &content).unwrap();
 		let display = format!("{}", parsed);
 

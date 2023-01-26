@@ -1,9 +1,12 @@
 use std::env;
 use std::fs;
 
-mod parser;
+mod murmur3;
+mod parserhashed;
+// mod parser;
 mod utils;
-use parser::Token;
+use parserhashed::TokenMap;
+// use parser::Token;
 
 const DEFAULT_TEST_PATH: &str = "test-single.txt";
 
@@ -23,17 +26,20 @@ fn main() {
 	};
 
 	let content: String = fs::read_to_string(path).unwrap();
-	let tree: Token = Token::new(&content);
-	let html: String = format!("{}", tree);
 
-	println!("len: {}", tree.tokens.len());
-	println!("parsed len: {}", html.len());
-	if p {
-		match o {
-			Some("tree") => println!("\ntree\n-------------------\n{:#?}\n", tree),
-			Some("html") => println!("\nprint\n-------------------\n{}", html),
-			None => println!("tree\n-------------------\n{:#?}\n", tree),
-			_ => (),
-		}
-	}
+	// println!("{}", murmur3::hash(content));
+
+	// let tree: Token = Token::new(&content);
+	// let html: String = format!("{}", tree);
+// 
+	// println!("len: {}", tree.tokens.len());
+	// println!("parsed len: {}", html.len());
+	// if p {
+		// match o {
+			// Some("tree") => println!("\ntree\n-------------------\n{:#?}\n", tree),
+			// Some("html") => println!("\nprint\n-------------------\n{}", html),
+			// None => println!("tree\n-------------------\n{:#?}\n", tree),
+			// _ => (),
+		// }
+	// }
 }
