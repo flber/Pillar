@@ -8,24 +8,16 @@ pub const RUNES: &str = ".~-!@#$%&*+=?>";
 pub const RUNE_DEFAULT: u8 = b';';
 pub const RUNE_EMPTY: u8 = b'?';
 
-/*
-pub struct Attr {
-	name: String,
-	val: String ,
-}
-*/
-
 /// Interface for a node on the abstract token tree to build a page.
 ///
 /// attributes:
 ///   rune: str in the RUNES vec denoting the associated element
 ///   contents: format string to encode the non-token part of a token
 ///   tokens: vec of child tokens
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Token {
 	pub rune: u8,
 	pub contents: String,
-	// pub attrs: Option<Vec<Attr>>,
 	pub tokens: Vec<Token>,
 }
 
@@ -44,8 +36,11 @@ impl Token {
 	///   optional token representation of the inputed rune and string
 	pub fn parse(rune: u8, content: &str) -> Option<Token> {
 		let bytes: &[u8] = content.as_bytes();
-		let mut t = Token::default();
-		t.rune = rune;
+		let mut t = Token {
+			rune,
+			contents: String::new(),
+			tokens: vec![],
+		};
 		let mut t_bytes: Vec<u8> = vec![];
 
 		let mut rune_char: u8 = RUNE_DEFAULT;
@@ -149,21 +144,17 @@ impl fmt::Display for Token {
 	}
 }
 
-pub struct _Page {
-	metadata: String,
-	tokens: Token,
-}
-
 #[cfg(test)]
 mod test {
 	use crate::parser::*;
+	use crate::utils::bench;
 
 	#[test]
 	fn test_parse_basic() {
 		let content = String::from("the {quick {brown}} fox {jumps}");
 		let parsed = Token::parse(b'$', &content).unwrap();
-		println!("{}", content);
-		println!("{:#?}", parsed);
+		// println!("{}", content);
+		// println!("{:#?}", parsed);
 
 		assert_eq!(2, parsed.tokens.len());
 		assert_eq!(1, parsed.tokens[0].tokens.len());
@@ -173,8 +164,8 @@ mod test {
 	fn test_parse_unicode() {
 		let content = String::from("🚚🜗🦇 {🪟🗐💒🐞🎉 {🤳🢰🞿🤈🎽🖥🌁}} 🌖🵟🥖 {🧣👜🯹🖺🌗🯶🶰}");
 		let parsed = Token::parse(b'$', &content).unwrap();
-		println!("{}", content);
-		println!("{:#?}", parsed);
+		// println!("{}", content);
+		// println!("{:#?}", parsed);
 
 		assert_eq!(2, parsed.tokens.len());
 		assert_eq!("🚚🜗🦇 {} 🌖🵟🥖 {}", parsed.contents);
@@ -213,5 +204,22 @@ mod test {
 		let display = format!("{}", parsed);
 
 		assert_eq!("the quick <>brown</> fox <>jumps</>", display);
+	}
+
+	#[test]
+	fn test_parse_time() {
+		let content = String::from("the {quick {brown}} fox {jumps}");
+		let (time, error) = bench::average(
+			|| {
+				Token::parse(b'$', &content).unwrap();
+			},
+			100_000,
+		);
+
+		if time > 10000 {
+			panic!("time was {} ns", time);
+		}
+
+		println!("parsed {} chars in {}±{} ns", content.len(), time, error);
 	}
 }

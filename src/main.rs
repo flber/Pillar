@@ -1,45 +1,18 @@
-use std::env;
-use std::fs;
+use std::io;
 
-mod murmur3;
-mod parserhashed;
-// mod parser;
+mod parser;
 mod utils;
-use parserhashed::TokenMap;
-// use parser::Token;
-
-const DEFAULT_TEST_PATH: &str = "test-single.txt";
+use parser::Token;
 
 fn main() {
-	let string_args: Vec<String> = env::args().collect();
-	let args: Vec<&str> = string_args.iter().map(|a| a.as_str()).collect();
+	let handle = io::stdin().lock();
+	match io::read_to_string(handle) {
+		Ok(s) => {
+			let tree: Token = Token::new(&s);
+			let html: String = format!("{}", tree);
 
-	let (path, p, o) = match &args[..] {
-		[_, path] => (&path[..], false, None),
-		[_, path, print] => (&path[..], print == &"print", None),
-		[_, path, "print", output] => match &output[..] {
-			"tree" => (&path[..], true, Some("tree")),
-			"html" => (&path[..], true, Some("html")),
-			_ => (&path[..], true, None),
-		},
-		_ => (DEFAULT_TEST_PATH, false, None),
-	};
-
-	let content: String = fs::read_to_string(path).unwrap();
-
-	// println!("{}", murmur3::hash(content));
-
-	// let tree: Token = Token::new(&content);
-	// let html: String = format!("{}", tree);
-// 
-	// println!("len: {}", tree.tokens.len());
-	// println!("parsed len: {}", html.len());
-	// if p {
-		// match o {
-			// Some("tree") => println!("\ntree\n-------------------\n{:#?}\n", tree),
-			// Some("html") => println!("\nprint\n-------------------\n{}", html),
-			// None => println!("tree\n-------------------\n{:#?}\n", tree),
-			// _ => (),
-		// }
-	// }
+			println!("{}", html);
+		}
+		Err(e) => println!("failed to read from stdin: {}", e),
+	}
 }
