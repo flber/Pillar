@@ -7,6 +7,27 @@ use std::ops::Range;
 pub const RUNES: &str = ".~-!@#$%&*+=?>";
 pub const RUNE_DEFAULT: u8 = b';';
 pub const RUNE_EMPTY: u8 = b'?';
+const PARENTS_MAX: usize = u8::MAX as usize;
+
+#[derive(Debug)]
+struct Parents {
+	bytes: [u8; PARENTS_MAX],
+	len: usize,
+}
+
+impl Parents {
+	fn new() -> Self {
+		Parents {
+			bytes: [0; PARENTS_MAX],
+			len: 0,
+		}
+	}
+
+	fn add(&mut self, b: u8) {
+		self.bytes[self.len] = b;
+		self.len += 1;
+	}
+}
 
 /// Interface for a node on the abstract token tree to build a page.
 ///
@@ -16,7 +37,7 @@ pub const RUNE_EMPTY: u8 = b'?';
 ///   tokens: vec of child tokens
 #[derive(Debug)]
 pub struct Token {
-	pub parents: Vec<u8>,
+	parents: Parents,
 	pub rune: u8,
 	pub contents: String,
 	pub tokens: Vec<Token>,
@@ -24,7 +45,7 @@ pub struct Token {
 
 impl Token {
 	pub fn new(s: &str) -> Self {
-		Token::parse(vec![], RUNE_EMPTY, s).unwrap()
+		Token::parse(Parents::new(), RUNE_EMPTY, s).unwrap()
 	}
 
 	/// Helper function to parse a string and rune into a token tree.
@@ -35,7 +56,7 @@ impl Token {
 	///
 	/// Returns:
 	///   optional token representation of the inputed rune and string
-	pub fn parse(parents: Vec<u8>, rune: u8, content: &str) -> Option<Token> {
+	fn parse(parents: Parents, rune: u8, content: &str) -> Option<Token> {
 		let bytes: &[u8] = content.as_bytes();
 		let mut t = Token {
 			parents,
@@ -78,8 +99,13 @@ impl Token {
 						t_bytes.push(*c);
 						range.end = i;
 						// new_parents costs ~275ns per character and ~0.25s for 100mb of input text
-						let mut new_parents = t.parents.clone();
-						new_parents.push(rune);
+						// let mut new_parents = t.parents.clone();
+						// new_parents.push(rune);
+						let mut new_parents = Parents {
+							bytes: t.parents.bytes,
+							len: t.parents.len,
+						};
+						new_parents.add(rune);
 						let new_token = Self::parse(
 							new_parents,
 							rune_char,
