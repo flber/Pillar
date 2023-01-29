@@ -16,6 +16,7 @@ pub const RUNE_EMPTY: u8 = b'?';
 ///   tokens: vec of child tokens
 #[derive(Debug)]
 pub struct Token {
+	pub parents: Vec<u8>,
 	pub rune: u8,
 	pub contents: String,
 	pub tokens: Vec<Token>,
@@ -23,7 +24,7 @@ pub struct Token {
 
 impl Token {
 	pub fn new(s: &str) -> Self {
-		Token::parse(RUNE_EMPTY, s).unwrap()
+		Token::parse(vec![], RUNE_EMPTY, s).unwrap()
 	}
 
 	/// Helper function to parse a string and rune into a token tree.
@@ -34,9 +35,10 @@ impl Token {
 	///
 	/// Returns:
 	///   optional token representation of the inputed rune and string
-	pub fn parse(rune: u8, content: &str) -> Option<Token> {
+	pub fn parse(parents: Vec<u8>, rune: u8, content: &str) -> Option<Token> {
 		let bytes: &[u8] = content.as_bytes();
 		let mut t = Token {
+			parents,
 			rune,
 			contents: String::new(),
 			tokens: vec![],
@@ -75,8 +77,14 @@ impl Token {
 					if num_brack < 1 {
 						t_bytes.push(*c);
 						range.end = i;
-						let new_token =
-							Self::parse(rune_char, &content[range.start + 1..range.end]);
+						// new_parents costs ~275ns per character and ~0.25s for 100mb of input text
+						let mut new_parents = t.parents.clone();
+						new_parents.push(rune);
+						let new_token = Self::parse(
+							new_parents,
+							rune_char,
+							&content[range.start + 1..range.end],
+						);
 						if let Some(nt) = new_token {
 							t.tokens.push(nt);
 						}
@@ -110,9 +118,9 @@ impl fmt::Display for Token {
 			b'+' => "summary",
 			b'=' => "pre",
 			b'>' => "blockquote",
-			b'?' => "PARSE_ERROR", // evauluates to remove tag syntax when printed
-			b';' => "",            // default, "contextual" rune
-			b'$' => "",            // reserved "scripting" rune
+			RUNE_EMPTY => "PARSE_ERROR", // evauluates to remove tag syntax when printed
+			RUNE_DEFAULT => "",          // default, "contextual" rune
+			b'$' => "",                  // reserved "scripting" rune
 			_ => "",
 		};
 
@@ -152,7 +160,7 @@ mod test {
 	#[test]
 	fn test_parse_basic() {
 		let content = String::from("the {quick {brown}} fox {jumps}");
-		let parsed = Token::parse(b'$', &content).unwrap();
+		let parsed = Token::new(&content);
 		// println!("{}", content);
 		// println!("{:#?}", parsed);
 
@@ -160,10 +168,18 @@ mod test {
 		assert_eq!(1, parsed.tokens[0].tokens.len());
 	}
 
+	/*#[test]
+	fn test_parse_parents() {
+		let content = String::from("the *{quick @{brown}} fox ={jumps}");
+		let parsed = Token::new(&content);
+
+		assert_eq!(Vec::<u8>::new(), parsed.parents);
+	}*/
+
 	#[test]
 	fn test_parse_unicode() {
 		let content = String::from("🚚🜗🦇 {🪟🗐💒🐞🎉 {🤳🢰🞿🤈🎽🖥🌁}} 🌖🵟🥖 {🧣👜🯹🖺🌗🯶🶰}");
-		let parsed = Token::parse(b'$', &content).unwrap();
+		let parsed = Token::new(&content);
 		// println!("{}", content);
 		// println!("{:#?}", parsed);
 
@@ -176,11 +192,11 @@ mod test {
 	#[test]
 	fn test_display() {
 		let content = String::from("the *{quick @{brown}} fox ={jumps}");
-		let parsed = Token::parse(b'$', &content).unwrap();
+		let parsed = Token::new(&content);
 		let display = format!("{}", parsed);
 
 		assert_eq!(
-			"<>the <i>quick <a>brown</a></i> fox <pre>jumps</pre></>",
+			"the <i>quick <a>brown</a></i> fox <pre>jumps</pre>",
 			display
 		);
 	}
@@ -188,10 +204,10 @@ mod test {
 	#[test]
 	fn test_display_empty() {
 		let content = String::from("the {quick {brown}} fox {jumps}");
-		let parsed = Token::parse(b'$', &content).unwrap();
+		let parsed = Token::new(&content);
 		let display = format!("{}", parsed);
 
-		assert_eq!("<>the <>quick <>brown</></> fox <>jumps</></>", display);
+		assert_eq!("the <>quick <>brown</></> fox <>jumps</>", display);
 	}
 
 	#[test]
@@ -200,24 +216,24 @@ mod test {
 			"the {}{{quick {{brown}}}} fox {{jumps}}",
 			RUNE_EMPTY as char
 		);
-		let parsed = Token::parse(RUNE_EMPTY, &content).unwrap();
+		let parsed = Token::new(&content);
 		let display = format!("{}", parsed);
 
 		assert_eq!("the quick <>brown</> fox <>jumps</>", display);
 	}
 
 	#[test]
-	fn test_parse_time() {
+	fn bench_lt_10000ns() {
 		let content = String::from("the {quick {brown}} fox {jumps}");
 		let (time, error) = bench::average(
 			|| {
-				Token::parse(b'$', &content).unwrap();
+				Token::new(&content);
 			},
 			100_000,
 		);
 
 		if time > 10000 {
-			panic!("time was {} ns", time);
+			panic!("time was {}±{} ns", time, error);
 		}
 
 		println!("parsed {} chars in {}±{} ns", content.len(), time, error);
