@@ -151,9 +151,8 @@ impl Token {
 		for handle in thread_handles {
 			match handle.join() {
 				Ok(h) => {
-					match h {
-						Some(t) => t.tokens.push(t),
-						None => (),
+					if let Some(nt) = h {
+						t.tokens.push(nt);
 					}
 				},
 				Err(e) => println!("error joining thread: {:?}", e),
