@@ -1,13 +1,33 @@
 use crate::utils::*;
+use std::thread;
 use std::fmt;
 use std::ops::Range;
 
 // sorta a weird way of doing things, but to check if a byte is in RUNES use:
-// RUNES.bytes()
+// RUNES.as_bytes().contains()
 pub const RUNES: &str = ".~-!@#$%&*+=?>";
+
+// pub enum RUNE {
+			// b'.' => "p",
+			// b'~' => "ul",
+			// b'-' => "li",
+			// b'!' => "img",
+			// b'@' => "a",
+			// b'#' => "h1",
+			// b'&' => "video",
+			// b'*' => "i",
+			// b'+' => "summary",
+			// b'=' => "pre",
+			// b'>' => "blockquote",
+			// RUNE_EMPTY => "PARSE_ERROR", // evauluates to remove tag syntax when printed
+			// RUNE_DEFAULT => "",          // default, "contextual" rune
+			// b'$' => "",                  // reserved "scripting" rune
+// 
+// }
+
 pub const RUNE_DEFAULT: u8 = b';';
 pub const RUNE_EMPTY: u8 = b'?';
-const PARENTS_MAX: usize = u8::MAX as usize;
+const PARENTS_MAX: usize = 32;
 
 #[derive(Debug)]
 struct Parents {
@@ -45,6 +65,7 @@ pub struct Token {
 
 impl Token {
 	pub fn new(s: &str) -> Self {
+		coz::scope!("Token::new");
 		Token::parse(Parents::new(), RUNE_EMPTY, s).unwrap()
 	}
 
@@ -57,6 +78,7 @@ impl Token {
 	/// Returns:
 	///   optional token representation of the inputed rune and string
 	fn parse(parents: Parents, rune: u8, content: &str) -> Option<Token> {
+		coz::scope!("Token::parse");
 		let bytes: &[u8] = content.as_bytes();
 		let mut t = Token {
 			parents,
@@ -69,6 +91,8 @@ impl Token {
 		let mut rune_char: u8 = RUNE_DEFAULT;
 		let mut num_brack = 0;
 		let mut range = Range { start: 0, end: 0 };
+
+		let mut thread_handles: Vec<thread::JoinHandle<Option<Token>>> = vec![];
 
 		for (i, c) in bytes.iter().enumerate() {
 			match c {
@@ -98,22 +122,22 @@ impl Token {
 					if num_brack < 1 {
 						t_bytes.push(*c);
 						range.end = i;
-						// new_parents costs ~275ns per character and ~0.25s for 100mb of input text
-						// let mut new_parents = t.parents.clone();
-						// new_parents.push(rune);
+						
 						let mut new_parents = Parents {
 							bytes: t.parents.bytes,
 							len: t.parents.len,
 						};
 						new_parents.add(rune);
-						let new_token = Self::parse(
+						let new_content = String::from(&content[range.start + 1..range.end]);
+						
+						let handler = thread::spawn(move || {
+							Self::parse(
 							new_parents,
 							rune_char,
-							&content[range.start + 1..range.end],
-						);
-						if let Some(nt) = new_token {
-							t.tokens.push(nt);
-						}
+							&new_content,
+							)
+						});
+						thread_handles.push(handler);
 					}
 				}
 				_ => {
@@ -124,14 +148,25 @@ impl Token {
 			}
 		}
 
+		for handle in thread_handles {
+			match handle.join() {
+				Ok(h) => {
+					match h {
+						Some(t) => t.tokens.push(t),
+						None => (),
+					}
+				},
+				Err(e) => println!("error joining thread: {:?}", e),
+			}
+		}
 		t.contents = String::from_utf8_lossy(&t_bytes).to_string();
-
 		Some(t)
 	}
 }
 
 impl fmt::Display for Token {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		coz::scope!("fmt::Display for Token");
 		let elem = match self.rune {
 			b'.' => "p",
 			b'~' => "ul",

@@ -1,5 +1,6 @@
 pub mod format {
 	pub fn fast_zip(xs: Vec<&str>, ys: Vec<&str>) -> String {
+		coz::scope!("fast_zip");
 		let mut extra = "";
 		if xs.len() != ys.len() {
 			if xs.len() > ys.len() {
