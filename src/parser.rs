@@ -1,30 +1,10 @@
 use crate::utils::*;
-use std::thread;
 use std::fmt;
 use std::ops::Range;
 
 // sorta a weird way of doing things, but to check if a byte is in RUNES use:
 // RUNES.as_bytes().contains()
 pub const RUNES: &str = ".~-!@#$%&*+=?>";
-
-// pub enum RUNE {
-			// b'.' => "p",
-			// b'~' => "ul",
-			// b'-' => "li",
-			// b'!' => "img",
-			// b'@' => "a",
-			// b'#' => "h1",
-			// b'&' => "video",
-			// b'*' => "i",
-			// b'+' => "summary",
-			// b'=' => "pre",
-			// b'>' => "blockquote",
-			// RUNE_EMPTY => "PARSE_ERROR", // evauluates to remove tag syntax when printed
-			// RUNE_DEFAULT => "",          // default, "contextual" rune
-			// b'$' => "",                  // reserved "scripting" rune
-// 
-// }
-
 pub const RUNE_DEFAULT: u8 = b';';
 pub const RUNE_EMPTY: u8 = b'?';
 const PARENTS_MAX: usize = 32;
@@ -92,8 +72,6 @@ impl Token {
 		let mut num_brack = 0;
 		let mut range = Range { start: 0, end: 0 };
 
-		let mut thread_handles: Vec<thread::JoinHandle<Option<Token>>> = vec![];
-
 		for (i, c) in bytes.iter().enumerate() {
 			match c {
 				b'{' => {
@@ -122,22 +100,19 @@ impl Token {
 					if num_brack < 1 {
 						t_bytes.push(*c);
 						range.end = i;
-						
 						let mut new_parents = Parents {
 							bytes: t.parents.bytes,
 							len: t.parents.len,
 						};
 						new_parents.add(rune);
-						let new_content = String::from(&content[range.start + 1..range.end]);
-						
-						let handler = thread::spawn(move || {
-							Self::parse(
+						let new_token = Self::parse(
 							new_parents,
 							rune_char,
-							&new_content,
-							)
-						});
-						thread_handles.push(handler);
+							&content[range.start + 1..range.end],
+						);
+						if let Some(nt) = new_token {
+							t.tokens.push(nt);
+						}
 					}
 				}
 				_ => {
@@ -148,17 +123,8 @@ impl Token {
 			}
 		}
 
-		for handle in thread_handles {
-			match handle.join() {
-				Ok(h) => {
-					if let Some(nt) = h {
-						t.tokens.push(nt);
-					}
-				},
-				Err(e) => println!("error joining thread: {:?}", e),
-			}
-		}
 		t.contents = String::from_utf8_lossy(&t_bytes).to_string();
+
 		Some(t)
 	}
 }
@@ -228,13 +194,15 @@ mod test {
 		assert_eq!(1, parsed.tokens[0].tokens.len());
 	}
 
-	/*#[test]
+	#[test]
 	fn test_parse_parents() {
 		let content = String::from("the *{quick @{brown}} fox ={jumps}");
 		let parsed = Token::new(&content);
 
-		assert_eq!(Vec::<u8>::new(), parsed.parents);
-	}*/
+		assert_eq!([0; PARENTS_MAX], parsed.parents.bytes);
+		assert_eq!(RUNE_EMPTY, parsed.tokens[0].parents.bytes[0]);
+		assert_eq!([RUNE_EMPTY, b'*'], parsed.tokens[0].tokens[0].parents.bytes[..2]);
+	}
 
 	#[test]
 	fn test_parse_unicode() {

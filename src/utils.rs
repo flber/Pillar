@@ -44,7 +44,7 @@ pub mod bench {
 		(average, deviation as u32)
 	}
 
-	pub fn time<F>(f: F) -> u64
+	fn time<F>(f: F) -> u64
 	where
 		F: Fn(),
 	{
@@ -52,7 +52,7 @@ pub mod bench {
 		f();
 		let nano: u64 = start.elapsed().as_nanos() as u64;
 
-		nano /* as f64 / 1_000_000_000.0 */
+		nano
 	}
 }
 
@@ -74,7 +74,6 @@ pub mod math {
 					.iter()
 					.map(|value| {
 						let diff = data_mean - (*value as f32);
-
 						diff * diff
 					})
 					.sum::<f32>() / count as f32;
