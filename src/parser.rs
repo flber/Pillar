@@ -45,7 +45,7 @@ pub struct Token {
 
 impl Token {
 	pub fn new(s: &str) -> Self {
-		coz::scope!("Token::new");
+		// coz::scope!("Token::new");
 		Token::parse(Parents::new(), RUNE_EMPTY, s).unwrap()
 	}
 
@@ -58,7 +58,7 @@ impl Token {
 	/// Returns:
 	///   optional token representation of the inputed rune and string
 	fn parse(parents: Parents, rune: u8, content: &str) -> Option<Token> {
-		coz::scope!("Token::parse");
+		// coz::scope!("Token::parse");
 		let bytes: &[u8] = content.as_bytes();
 		let mut t = Token {
 			parents,
@@ -131,7 +131,7 @@ impl Token {
 
 impl fmt::Display for Token {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		coz::scope!("fmt::Display for Token");
+		// coz::scope!("fmt::Display for Token");
 		let elem = match self.rune {
 			b'.' => "p",
 			b'~' => "ul",
@@ -144,8 +144,8 @@ impl fmt::Display for Token {
 			b'+' => "summary",
 			b'=' => "pre",
 			b'>' => "blockquote",
-			RUNE_EMPTY => "PARSE_ERROR", // evauluates to remove tag syntax when printed
-			RUNE_DEFAULT => "",          // default, "contextual" rune
+			RUNE_EMPTY => "PARSE_ERROR", // ? -> evauluates to remove tag syntax when printed
+			RUNE_DEFAULT => "",          // ; -> default, "contextual" rune
 			b'$' => "",                  // reserved "scripting" rune
 			_ => "",
 		};

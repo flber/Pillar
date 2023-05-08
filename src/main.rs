@@ -8,8 +8,8 @@ use parser::Token;
 fn main() {
 	let handle = io::stdin().lock();
 	match io::read_to_string(handle) {
-		Ok(mut s) => {
-			let tree: Token = Token::new(&mut s);
+		Ok(s) => {
+			let tree: Token = Token::new(&s);
 			let html: String = format!("{}", tree);
 
 			println!("{}", html);
@@ -19,6 +19,7 @@ fn main() {
 }
 */
 
+// /*
 use std::env;
 use std::fs;
 
@@ -29,7 +30,7 @@ use parser::Token;
 const DEFAULT_TEST_PATH: &str = "test-100.txt";
 
 fn main() {
-	coz::thread_init();
+	// coz::thread_init();
 
 	let string_args: Vec<String> = env::args().collect();
 	let args: Vec<&str> = string_args.iter().map(|a| a.as_str()).collect();
@@ -61,3 +62,4 @@ fn main() {
 		println!("len: {}", html.len());
 	}
 }
+// */
