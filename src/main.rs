@@ -8,10 +8,12 @@ use std::process::{Command, Stdio};
 use std::time::SystemTime;
 use std::{fs::File, io::ErrorKind};
 use toml::Value;
+mod granite;
+mod progress;
 mod utils;
+use granite::*;
 use lazy_static::lazy_static;
 use regex::Regex;
-use utils::granite::*;
 use utils::text::*;
 use walkdir::{DirEntry, WalkDir};
 
@@ -21,8 +23,8 @@ use walkdir::{DirEntry, WalkDir};
 // basic help menu items to generate responses to unknown commands
 const HELP_MENU: &str = "Builds static site from granite files \n\nUSAGE: \n\tpillar [OPTIONS] [COMMAND] \n\nOPTIONS: \n\t-h\tprints this information \n\t-V\tprints current version \n\nCOMMANDS: \n\tbuild\tbuilds html from granite \n\tclean\tclears html directory \n";
 
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 
 fn get_banner() -> std::string::String {
 	format!(
@@ -42,14 +44,13 @@ fn is_not_hidden(entry: &DirEntry) -> bool {
 	entry
 		.file_name()
 		.to_str()
-		.map(|s| entry.depth() == 0 || !s.starts_with("."))
+		.map(|s| entry.depth() == 0 || !s.starts_with('.'))
 		.unwrap_or(false)
 }
 
 fn main() -> std::io::Result<()> {
 	// flags to define program behaviour
 	let mut should_build = false;
-	let mut debug_active = false;
 	let mut build_all = false;
 
 	let args: Vec<String> = env::args().collect();
@@ -72,11 +73,7 @@ fn main() -> std::io::Result<()> {
 			"-h" | "--help" => usage(),
 			"build" => {
 				should_build = true;
-				match opt.as_str() {
-					"--debug" => debug_active = true,
-					"--all" => build_all = true,
-					_ => (),
-				}
+				build_all = opt.as_str() == "--all";
 			}
 			// this clean also does nothing right now...
 			"clean" => (),
@@ -183,7 +180,7 @@ fn main() -> std::io::Result<()> {
 
 				// parses content into Page
 				// -> utils.rs:[Page::new(s: &str, debug: bool)]
-				let page = Page::new(&contents, debug_active);
+				let page = Page::new(&contents);
 				// makes progress bars on different lines
 				println!();
 
@@ -212,8 +209,7 @@ fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::R
 
 	let mut plugins: Vec<String> = RE
 		.find_iter(contents)
-		.filter_map(|m| m.as_str().parse().ok())
-		.map(|m| slice(&m, 2..len(&m) - 2))
+		.map(|m| slice(m.as_str(), 2..len(m.as_str()) - 2))
 		.collect();
 
 	while !plugins.is_empty() {
@@ -250,8 +246,8 @@ fn run_plugins(config: &Config, path_str: &str, contents: &String) -> std::io::R
 
 		plugins = RE
 			.find_iter(&output)
-			.filter_map(|m| m.as_str().parse().ok())
-			.map(|m| slice(&m, 2..len(&m) - 2))
+			.filter_map(|m| Some(m.as_str()))
+			.map(|m| slice(m, 2..len(m) - 2))
 			.collect();
 	}
 
