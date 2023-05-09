@@ -201,7 +201,10 @@ mod test {
 
 		assert_eq!([0; PARENTS_MAX], parsed.parents.bytes);
 		assert_eq!(RUNE_EMPTY, parsed.tokens[0].parents.bytes[0]);
-		assert_eq!([RUNE_EMPTY, b'*'], parsed.tokens[0].tokens[0].parents.bytes[..2]);
+		assert_eq!(
+			[RUNE_EMPTY, b'*'],
+			parsed.tokens[0].tokens[0].parents.bytes[..2]
+		);
 	}
 
 	#[test]
