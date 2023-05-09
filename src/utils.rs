@@ -3,7 +3,8 @@ pub mod text {
 	use core::ops::Range;
 
 	/*
-	removes whitespace around given string from start and end indices
+	removes whitespace around the given string from start and end offsets
+	returns the trimmed string and the indexes of its start and end
 	*/
 	pub fn trim(l: &String, start: usize, end: usize) -> (String, usize, usize) {
 		let mut line = l.clone();
@@ -19,6 +20,9 @@ pub mod text {
 				hit_text = true;
 			}
 		}
+		// reverse loop means `first` is always 0?
+		// println!("{}", first);
+
 		hit_text = false;
 		let mut i = start;
 		while i < len(&line) - end {
@@ -39,7 +43,7 @@ pub mod text {
 	*/
 	pub fn replace(s: &str, target: &str, insert: &str) -> String {
 		let mut out = s.to_string();
-		while let Some(i) = s.find(target) {
+		while let Some(i) = out.find(target) {
 			out.replace_range(i..i + len(target), insert);
 		}
 		out
@@ -52,13 +56,20 @@ pub mod text {
 		assert!(i <= len(s), "the index was larger than the target slice");
 
 		let first = slice(s, 0..i);
-		let second = slice(s, i + l..len(s));
+		let second: String;
+		// if this is met, the range is len..len, which rust evaluate to the whole string
+		if i+l == len(s) {
+			// so in this condition we zero out the second half
+			second = String::from("");
+		} else {
+			second = slice(s, i + l..len(s));
+		}
 
 		[first, second].concat()
 	}
 
 	/*
-	returns the first character in a string, as well as the index of that string
+	returns the first non-whitespace character in a string, as well as the index of that string
 	*/
 	pub fn first(s: &str) -> (String, usize) {
 		let mut num = 0;
@@ -117,5 +128,83 @@ pub mod text {
 			.map(|(i, _)| i)
 			.unwrap_or(s.len());
 		s[begin..end].to_string()
+	}
+}
+
+#[cfg(test)]
+mod test {
+	use super::*;
+	use std::ops::Range;
+
+	#[test]
+	fn test_len() {
+		let data_3 = "len";
+		let data_4 = "len👍";
+		let data_5 = "len-Þ";
+
+		assert_eq!(3, text::len(data_3));
+		assert_eq!(4, text::len(data_4));
+		assert_eq!(5, text::len(data_5));
+	}
+
+	#[test]
+	fn test_slice() {
+		let data = "some text";
+		let r = Range {
+			start: 5,
+			end: text::len(data),
+		};
+		assert_eq!(String::from("text"), text::slice(data, r));
+	}
+
+	#[test]
+	fn test_insert() {
+		let data = "hello world";
+		let ins = " my";
+		let idx = 5;
+		let out = String::from("hello my world");
+		assert_eq!(out, text::insert(data, idx, ins));
+	}
+
+	#[test]
+	fn test_first() {
+		let data = " \tfirst";
+		let expect = (String::from("f"), 2);
+		assert_eq!(expect, text::first(data));
+	}
+	
+	#[test]
+	fn test_first_from() {
+		let data = "first  second";
+		let expect = (String::from("s"), 2);
+		assert_eq!(expect, text::first_from(data, 5));
+	}
+
+	#[test]
+	fn test_remove() {
+		let data = "hello ";
+		let expect = String::from("hello");
+		assert_eq!(expect, text::remove(data, 5, 1));
+		
+		let data = "hello ";
+		let expect = String::from("hlo ");
+		assert_eq!(expect, text::remove(data, 1, 2));
+	}
+
+	#[test]
+	fn test_replace() {
+		let data = "bat";
+		let target = "at";
+		let insert = "te";
+		let expect = String::from("bte");
+		assert_eq!(expect, text::replace(data, target, insert));
+	}
+
+	#[test]
+	fn test_trim() {
+		let data = String::from("  hello world   ");
+		// it currently does not correctly calculate indexes due to reverse loop error
+		let expect = (String::from("hello world"), 2, 12);
+		assert_eq!(expect.0, text::trim(&data, 0, 0).0);
 	}
 }

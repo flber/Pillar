@@ -140,34 +140,33 @@ pub fn parse(s: &str) -> Page {
 }
 
 // not implemented right now, still deciding on its usefulness
-fn _pre_process(s: &str) -> String {
-	let t = s;
-	let mut lines = t.lines();
-	let mut output = Vec::<String>::new();
-
-	for _ in 0..lines.clone().count() {
-		let line = lines.next().unwrap_or("");
-		.to_string();
-		output.push(line);
-	}
-
-	for i in 0..output.len() {
-		// add `mut` if doing preprocessing
-		let line = output[i].clone();
-		/*
-		if line != "" {
-		  let first = first(&line.to_string()).0;
-
-		  if first != "[".to_string() && first != "]".to_string(){
-			line = ["[ p |", &line, " ]"].concat();
-		  }
-		}
-		*/
-		output[i] = insert(&line, len(&line), "\n");
-	}
-
-	output.concat()
-}
+// fn _pre_process(s: &str) -> String {
+// 	let t = s;
+// 	let mut lines = t.lines();
+// 	let mut output = Vec::<String>::new();
+// 
+// 	for _ in 0..lines.clone().count() {
+// 		let line = lines.next().unwrap_or("");
+// 		output.push(line);
+// 	}
+// 
+// 	for i in 0..output.len() {
+// 		// add `mut` if doing preprocessing
+// 		let line = output[i].clone();
+// 		/*
+// 		if line != "" {
+// 		  let first = first(&line.to_string()).0;
+// 
+// 		  if first != "[".to_string() && first != "]".to_string(){
+// 			line = ["[ p |", &line, " ]"].concat();
+// 		  }
+// 		}
+// 		*/
+// 		output[i] = insert(&line, len(&line), "\n");
+// 	}
+// 
+// 	output.concat()
+// }
 
 fn parse_granite(s: &String) -> String {
 	let mut t = s.clone();
